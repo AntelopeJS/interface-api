@@ -1,6 +1,31 @@
 # Changelog
 
 
+## v0.0.3
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.2...v0.0.3)
+
+### 💅 Refactors
+
+- Switch test modules from local to npm packages ([20e8baa](https://github.com/AntelopeJS/interface-api/commit/20e8baa))
+
+### 📖 Documentation
+
+- Rewrite documentation for production readiness ([c20d378](https://github.com/AntelopeJS/interface-api/commit/c20d378))
+
+### 🏡 Chore
+
+- Update dependencies ([1e4ded7](https://github.com/AntelopeJS/interface-api/commit/1e4ded7))
+- Package maintenance ([#3](https://github.com/AntelopeJS/interface-api/pull/3))
+
+### 🤖 CI
+
+- Add test step to CI workflow ([db7e271](https://github.com/AntelopeJS/interface-api/commit/db7e271))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli <upd4ting@gmail.com>
+
 ## v0.0.2
 
 
