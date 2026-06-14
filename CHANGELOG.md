@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.4
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.3...v0.0.4)
+
+### 🚀 Enhancements
+
+- **cors:** Expose gettable and settable CORS config in interface ([#4](https://github.com/AntelopeJS/interface-api/pull/4))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli <upd4ting@gmail.com>
+
 ## v0.0.3
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.2...v0.0.3)
