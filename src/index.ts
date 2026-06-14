@@ -543,6 +543,13 @@ export interface CorsConfig {
   allowedMethods?: string[];
 
   /**
+   * Request headers allowed for cross-origin requests
+   * (Access-Control-Allow-Headers). When omitted, the implementation
+   * reflects the headers requested by the client.
+   */
+  allowedHeaders?: string[];
+
+  /**
    * Whether to send the Access-Control-Allow-Credentials header.
    */
   credentials?: boolean;
