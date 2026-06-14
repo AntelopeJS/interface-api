@@ -522,6 +522,54 @@ export const GetControllerInstance: <T>(
 export const Listen: () => Promise<void> = InterfaceFunction();
 
 /**
+ * Allowed CORS origin.
+ *
+ * Either a single origin (exact string or RegExp) or a list of origins.
+ */
+export type AllowedOrigin = string | RegExp | Array<string | RegExp>;
+
+/**
+ * CORS configuration.
+ */
+export interface CorsConfig {
+  /**
+   * Origins allowed to access the API. CORS is disabled when omitted.
+   */
+  allowedOrigins?: AllowedOrigin;
+
+  /**
+   * HTTP methods allowed for cross-origin requests.
+   */
+  allowedMethods?: string[];
+
+  /**
+   * Whether to send the Access-Control-Allow-Credentials header.
+   */
+  credentials?: boolean;
+
+  /**
+   * Lifetime in seconds of the preflight response (Access-Control-Max-Age).
+   */
+  maxAge?: number;
+}
+
+/**
+ * Returns the current CORS configuration.
+ *
+ * @returns Current CORS configuration.
+ */
+export const GetCorsConfig: () => Promise<CorsConfig> = InterfaceFunction();
+
+/**
+ * Replaces the CORS configuration. Changes apply to subsequent requests
+ * without restarting the servers.
+ *
+ * @param config New CORS configuration.
+ */
+export const SetCorsConfig: (config: CorsConfig) => Promise<void> =
+  InterfaceFunction();
+
+/**
  * Handler mode.
  */
 export type RouteHandlerMode =
