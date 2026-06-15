@@ -39,10 +39,8 @@
   "antelopeJs": {
     "test": "src/antelope.test.ts"
   },
-  "dependencies": {
-    "@antelopejs/interface-core": "^0.0.3"
-  },
   "devDependencies": {
+    "@antelopejs/interface-core": ">=0.0.3 <1.0.0",
     "@biomejs/biome": "2.3.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.19.15",
@@ -54,6 +52,9 @@
     "sinon": "^20.0.0",
     "typescript": "^5.9.3",
     "ws": "^8.20.0"
+  },
+  "peerDependencies": {
+    "@antelopejs/interface-core": ">=0.0.3 <1.0.0"
   },
   "publishConfig": {
     "access": "public"
