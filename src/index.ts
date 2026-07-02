@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { PassThrough } from "node:stream";
 import {
   GetMetadata,
+  GetResponsibleModule,
   InterfaceFunction,
   RegisteringProxy,
 } from "@antelopejs/interface-core";
@@ -632,6 +633,13 @@ export interface RouteHandler {
    * Handler priority.
    */
   priority?: HandlerPriority;
+
+  /**
+   * Id of the module that registered this route, resolved from the call stack
+   * at registration time. Set by {@link RegisterRoute}; may be undefined when
+   * the responsible module cannot be determined.
+   */
+  module?: string;
 }
 
 /**
@@ -650,6 +658,11 @@ let nextId = 0;
  */
 export function RegisterRoute(handler: RouteHandler) {
   const id = nextId++;
+  // Resolve the owning module here, while the registering controller's frame is
+  // still on the stack (RegisterRoute runs synchronously during module load).
+  // Setting it on `handler` before `register` means onRegister subscribers and
+  // getRegisteredRoutes both see it.
+  handler.module = GetResponsibleModule();
   Logging.Debug(
     `Registered ${handler.method.toUpperCase()} ${handler.location} (${handler.callback.name || "anonymous"})`,
   );
@@ -670,6 +683,7 @@ export function getRegisteredRoutes(): Array<{
   parameters: Array<ComputedParameter | null>;
   properties: Record<string, ComputedParameter>;
   priority?: HandlerPriority;
+  module?: string;
 }> {
   return routesList.map((handler) => ({
     id: handler.id.toString(),
@@ -679,6 +693,7 @@ export function getRegisteredRoutes(): Array<{
     parameters: handler.parameters,
     properties: handler.properties,
     priority: handler.priority,
+    module: handler.module,
   }));
 }
 
