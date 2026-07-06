@@ -660,14 +660,15 @@ export function RegisterRoute(handler: RouteHandler) {
   const id = nextId++;
   // Resolve the owning module here, while the registering controller's frame is
   // still on the stack (RegisterRoute runs synchronously during module load).
-  // Setting it on `handler` before `register` means onRegister subscribers and
-  // getRegisteredRoutes both see it.
-  handler.module = GetResponsibleModule();
+  // Enrich a shallow copy rather than mutating the caller's handler object, so
+  // onRegister subscribers and getRegisteredRoutes both see `module` without the
+  // input object gaining an unexpected property.
+  const enriched: RouteHandler = { ...handler, module: GetResponsibleModule() };
   Logging.Debug(
-    `Registered ${handler.method.toUpperCase()} ${handler.location} (${handler.callback.name || "anonymous"})`,
+    `Registered ${enriched.method.toUpperCase()} ${enriched.location} (${enriched.callback.name || "anonymous"})`,
   );
-  routesProxy.register(id.toString(), handler);
-  routesList.push({ ...handler, id });
+  routesProxy.register(id.toString(), enriched);
+  routesList.push({ ...enriched, id });
   return id;
 }
 
