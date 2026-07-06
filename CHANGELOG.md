@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.7
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.6...v0.0.7)
+
+### 🩹 Fixes
+
+- Avoid mutating the caller's handler in RegisterRoute ([#7](https://github.com/AntelopeJS/interface-api/pull/7))
+
+### ❤️ Contributors
+
+- Fabrice Cst <fabrice@altab.be>
+
 ## v0.0.6
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.5...v0.0.6)
