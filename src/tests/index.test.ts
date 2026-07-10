@@ -1218,6 +1218,7 @@ describe("WebSocket", () => {
   });
 });
 
+// Keep in sync with SERVER_ERROR_BODY_LOG_LIMIT in src/index.ts
 const BODY_LOG_LIMIT = 2048;
 
 interface StubRequest {
@@ -1269,6 +1270,16 @@ describe("HTTPResult error logging", () => {
   it("Logs a 500 with request context once at send time", () => {
     const result = new LocalHTTPResult(500, { error: "Internal" });
     result.sendResponse(createResponseStub());
+    assert.equal(errorLogs().length, 1);
+    assert.equal(
+      errorLogs()[0].args[0],
+      'HTTP 500 GET /boom: {"error":"Internal"}',
+    );
+  });
+
+  it("Logs a 500 when sendHeadResponse is the first sender", () => {
+    const result = new LocalHTTPResult(500, { error: "Internal" });
+    result.sendHeadResponse(createResponseStub());
     assert.equal(errorLogs().length, 1);
     assert.equal(
       errorLogs()[0].args[0],
