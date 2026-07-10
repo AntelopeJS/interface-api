@@ -205,7 +205,7 @@ export class HTTPResult {
     return !!this.stream;
   }
 
-  private logServerError() {
+  private logServerError(res: ServerResponse) {
     if (this.status !== 500 || this.errorLogged) {
       return;
     }
@@ -214,7 +214,9 @@ export class HTTPResult {
       this.body.length > SERVER_ERROR_BODY_LOG_LIMIT
         ? `${this.body.slice(0, SERVER_ERROR_BODY_LOG_LIMIT)}... [truncated]`
         : this.body;
-    Logging.Error(`HTTP 500 response: ${body}`);
+    Logging.Error(
+      `HTTP 500 ${res.req?.method ?? "?"} ${res.req?.url ?? "?"}: ${body}`,
+    );
   }
 
   /**
@@ -223,7 +225,7 @@ export class HTTPResult {
    * @param res Response object
    */
   public sendHeadResponse(res: ServerResponse) {
-    this.logServerError();
+    this.logServerError(res);
     res
       .writeHead(this.status, {
         ...this.headers,
@@ -241,7 +243,7 @@ export class HTTPResult {
    * @param res Response object
    */
   public sendResponse(res: ServerResponse, abortStream = false) {
-    this.logServerError();
+    this.logServerError(res);
     res.writeHead(this.status, {
       ...this.headers,
       "Content-Type": this.contentType,
