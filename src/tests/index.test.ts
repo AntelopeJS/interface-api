@@ -32,6 +32,7 @@ import {
 } from "@antelopejs/interface-core/decorators";
 import sinon, { type SinonSpy } from "sinon";
 import WebSocket from "ws";
+import { HTTPResult as LocalHTTPResult } from "../index";
 
 const SpyMethod = MakeMethodDecorator((_target, _key, descriptor) => {
   descriptor.value = sinon.spy(descriptor.value);
@@ -1209,5 +1210,18 @@ describe("WebSocket", () => {
       ws.on("close", resolve);
       testWSSocket.close();
     });
+  });
+});
+
+describe("HTTPResult error logging", () => {
+  it("Does not write the body to the console on status 500", () => {
+    const consoleError = sinon.stub(console, "error");
+    try {
+      const result = new LocalHTTPResult(500, { error: "Internal" });
+      result.setStatus(500);
+      sinon.assert.notCalled(consoleError);
+    } finally {
+      consoleError.restore();
+    }
   });
 });

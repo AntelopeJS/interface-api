@@ -49,6 +49,8 @@ export type ControllerClass<T = Record<string, any>> = Class<T> & {
   location: string;
 };
 
+const SERVER_ERROR_BODY_LOG_LIMIT = 2048;
+
 /**
  * Result object of an API call.
  *
@@ -59,6 +61,7 @@ export class HTTPResult {
   private body = "";
   private contentType = "text/plain";
   private stream?: PassThrough;
+  private errorLogged = false;
   /**
    * Additional response headers
    */
@@ -102,9 +105,6 @@ export class HTTPResult {
    */
   public setStatus(status: number) {
     this.status = status;
-    if (status === 500) {
-      console.error(this.body);
-    }
   }
 
   /**
@@ -205,12 +205,25 @@ export class HTTPResult {
     return !!this.stream;
   }
 
+  private logServerError() {
+    if (this.status !== 500 || this.errorLogged) {
+      return;
+    }
+    this.errorLogged = true;
+    const body =
+      this.body.length > SERVER_ERROR_BODY_LOG_LIMIT
+        ? `${this.body.slice(0, SERVER_ERROR_BODY_LOG_LIMIT)}... [truncated]`
+        : this.body;
+    Logging.Error(`HTTP 500 response: ${body}`);
+  }
+
   /**
    * Send response without the body.
    *
    * @param res Response object
    */
   public sendHeadResponse(res: ServerResponse) {
+    this.logServerError();
     res
       .writeHead(this.status, {
         ...this.headers,
@@ -228,6 +241,7 @@ export class HTTPResult {
    * @param res Response object
    */
   public sendResponse(res: ServerResponse, abortStream = false) {
+    this.logServerError();
     res.writeHead(this.status, {
       ...this.headers,
       "Content-Type": this.contentType,
