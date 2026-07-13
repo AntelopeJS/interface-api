@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v0.0.8
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.7...v0.0.8)
+
+### 🔥 Performance
+
+- Stop synchronously logging full 500 response bodies in HTTPResult.setStatus ([#10](https://github.com/AntelopeJS/interface-api/pull/10))
+- Prune route registry entries on unregister and module unload ([#11](https://github.com/AntelopeJS/interface-api/pull/11))
+
+### ❤️ Contributors
+
+- Fabrice Cst <fabrice@altab.be>
+
 ## v0.0.7
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.6...v0.0.7)
