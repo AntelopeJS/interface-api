@@ -659,12 +659,42 @@ export interface RouteHandler {
 }
 
 /**
+ * Registered route handlers indexed by their proxy id, mirroring the entries
+ * held by {@link routesProxy}. Pruned by {@link RoutesProxy} so stale handlers
+ * do not accumulate across module reloads.
+ */
+const routesList = new Map<string, RouteHandler>();
+
+/**
+ * RegisteringProxy that also prunes {@link routesList} on the same lifecycle
+ * events that remove the real routes (single unregister or module unload), so
+ * reloading a controller module releases its previous route entries instead of
+ * leaking them.
+ */
+class RoutesProxy extends RegisteringProxy<
+  (id: string, handler: RouteHandler) => void
+> {
+  override unregister(id: string) {
+    routesList.delete(id);
+    super.unregister(id);
+  }
+
+  override unregisterModule(mod: string) {
+    for (const [id, handler] of routesList) {
+      if (handler.module === mod) {
+        routesList.delete(id);
+      }
+    }
+    super.unregisterModule(mod);
+  }
+}
+
+/**
  * @internal
  */
-export const routesProxy = new RegisteringProxy<
+export const routesProxy: RegisteringProxy<
   (id: string, handler: RouteHandler) => void
->();
-const routesList: Array<RouteHandler & { id: number }> = [];
+> = new RoutesProxy();
 let nextId = 0;
 /**
  * Register a RouteHandler to the API.
@@ -684,7 +714,7 @@ export function RegisterRoute(handler: RouteHandler) {
     `Registered ${enriched.method.toUpperCase()} ${enriched.location} (${enriched.callback.name || "anonymous"})`,
   );
   routesProxy.register(id.toString(), enriched);
-  routesList.push({ ...enriched, id });
+  routesList.set(id.toString(), enriched);
   return id;
 }
 
@@ -702,8 +732,8 @@ export function getRegisteredRoutes(): Array<{
   priority?: HandlerPriority;
   module?: string;
 }> {
-  return routesList.map((handler) => ({
-    id: handler.id.toString(),
+  return Array.from(routesList, ([id, handler]) => ({
+    id,
     location: handler.location,
     method: handler.method,
     callbackName: handler.callback.name || "anonymous",
