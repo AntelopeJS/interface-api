@@ -18,7 +18,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "exports": {
     ".": {
@@ -37,7 +38,8 @@
     "test": "pnpm run build && ajs module test ."
   },
   "antelopeJs": {
-    "test": "src/antelope.test.ts"
+    "test": "src/antelope.test.ts",
+    "skills": ["./skills"]
   },
   "devDependencies": {
     "@antelopejs/interface-core": ">=0.0.3 <1.0.0",
