@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v0.0.9
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.8...v0.0.9)
+
+### 🚀 Enhancements
+
+- **skills:** Ship a consumer skill with the package ([#12](https://github.com/AntelopeJS/interface-api/pull/12))
+
+### 🎨 Styles
+
+- Reformat skills array in package.json ([6e495b2](https://github.com/AntelopeJS/interface-api/commit/6e495b2))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli <upd4ting@gmail.com>
+
 ## v0.0.8
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.7...v0.0.8)
