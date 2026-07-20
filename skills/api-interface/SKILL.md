@@ -33,21 +33,21 @@ import {
 ```ts
 import { Controller, Get, Post, Parameter, JSONBody, HTTPResult } from "@antelopejs/interface-api";
 
-export class UserController extends Controller("/users") {
+export class BookController extends Controller("/books") {
   @Get(":id")
-  async getUser(@Parameter("id") id: string) {
+  async getBook(@Parameter("id") id: string) {
     return new HTTPResult(200, { id }); // non-string body -> JSON + application/json
   }
 
-  @Post() // no location -> registers POST /users/createUser (method name becomes the path segment)
-  async createUser(@JSONBody() body: { name: string }) {
+  @Post() // no location -> registers POST /books/createBook (method name becomes the path segment)
+  async createBook(@JSONBody() body: { title: string }) {
     return new HTTPResult(201, body);
   }
 }
 ```
 
-Sub-paths: `class Sub extends UserController.extend("admin") {}` mounts at
-`/users/admin`. `PartialController(UserController)` reuses the same location
+Sub-paths: `class Sub extends BookController.extend("archive") {}` mounts at
+`/books/archive`. `PartialController(BookController)` reuses the same location
 (and inherited computed properties) to split routes across files.
 
 ## Gotchas
