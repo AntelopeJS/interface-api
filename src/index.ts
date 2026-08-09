@@ -719,6 +719,22 @@ export function RegisterRoute(handler: RouteHandler) {
 }
 
 /**
+ * Unregister a route registered with {@link RegisterRoute}.
+ *
+ * Routes are otherwise only released when their module unloads, so anything
+ * with a shorter life than its module — a CMS page taken down while the module
+ * stays up, a controller mounted for the duration of a job — kept answering
+ * after the thing that registered it was gone. The proxy is not reachable from
+ * a consumer: interface resolution rebinds it, so the handle has to come from
+ * here.
+ *
+ * @param id Route ID returned by {@link RegisterRoute}.
+ */
+export function UnregisterRoute(id: number): void {
+  routesProxy.unregister(id.toString());
+}
+
+/**
  * Retrieves all registered routes with detailed information.
  * @returns {Array<Object>} An array of route information objects.
  */
