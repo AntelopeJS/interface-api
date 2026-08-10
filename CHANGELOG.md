@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.10
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.9...v0.0.10)
+
+### 🚀 Enhancements
+
+- **routes:** Let a consumer unregister a single route ([#13](https://github.com/AntelopeJS/interface-api/pull/13))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli <upd4ting@gmail.com>
+
 ## v0.0.9
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.8...v0.0.9)
