@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.11
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.10...v0.0.11)
+
+### 🔥 Performance
+
+- **http:** Allocate response headers lazily ([#14](https://github.com/AntelopeJS/interface-api/pull/14))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli <upd4ting@gmail.com>
+
 ## v0.0.10
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.9...v0.0.10)
