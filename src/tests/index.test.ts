@@ -1285,6 +1285,20 @@ describe("HTTPResult response contract", () => {
     assert.equal(result.getContentType(), "application/json");
   });
 
+  it("Peeks at headers without creating the mutable store", () => {
+    const result = new LocalHTTPResult();
+
+    assert.equal(result.peekHeaders(), undefined);
+
+    result.addHeader("X-Added", "yes");
+    assert.equal(result.peekHeaders()?.["X-Added"], "yes");
+
+    const headers = result.getHeaders();
+    assert.strictEqual(result.peekHeaders(), headers);
+    headers["X-Mutable"] = "yes";
+    assert.equal(result.peekHeaders()?.["X-Mutable"], "yes");
+  });
+
   it("Sends the current own headers, content type, status, and body", () => {
     const result = new LocalHTTPResult(202, { ok: true });
     const headers = result.getHeaders();

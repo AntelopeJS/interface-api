@@ -188,6 +188,15 @@ export class HTTPResult {
   }
 
   /**
+   * Read the headers without creating the headers key-value store.
+   *
+   * @returns Current headers, or undefined when no header has been added or retrieved
+   */
+  public peekHeaders(): Readonly<Record<string, string>> | undefined {
+    return this.headers;
+  }
+
+  /**
    * Sets this response to be long-lived and gets its writable stream.
    * Use this for long-running responses like Server-Sent Events or streaming data.
    *
