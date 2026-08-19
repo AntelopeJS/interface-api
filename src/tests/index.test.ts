@@ -1232,6 +1232,19 @@ interface StubServerResponse {
   end: () => void;
 }
 
+interface CapturedServerResponse {
+  req: StubRequest;
+  headers: Record<string, string>;
+  status?: number;
+  body?: string;
+  ended: boolean;
+  writeHead: (
+    status: number,
+    headers?: Record<string, string>,
+  ) => CapturedServerResponse;
+  end: (body?: string) => void;
+}
+
 function createResponseStub(): ServerResponse {
   const stub: StubServerResponse = {
     req: { method: "GET", url: "/boom" },
@@ -1240,6 +1253,81 @@ function createResponseStub(): ServerResponse {
   };
   return stub as unknown as ServerResponse;
 }
+
+function createCapturedResponse(): CapturedServerResponse {
+  const response: CapturedServerResponse = {
+    req: { method: "GET", url: "/result" },
+    headers: {},
+    ended: false,
+    writeHead(status, headers) {
+      response.status = status;
+      for (const [name, value] of Object.entries(headers ?? {})) {
+        response.headers[name.toLowerCase()] = value;
+      }
+      return response;
+    },
+    end(body) {
+      response.body = body;
+      response.ended = true;
+    },
+  };
+  return response;
+}
+
+describe("HTTPResult response contract", () => {
+  it("Serializes object bodies immediately", () => {
+    const body = { message: "before" };
+    const result = new LocalHTTPResult(200, body);
+
+    body.message = "after";
+
+    assert.equal(result.getBody(), '{"message":"before"}');
+    assert.equal(result.getContentType(), "application/json");
+  });
+
+  it("Sends the current own headers, content type, status, and body", () => {
+    const result = new LocalHTTPResult(202, { ok: true });
+    const headers = result.getHeaders();
+    Object.setPrototypeOf(headers, { "X-Inherited": "excluded" });
+    headers["X-Current"] = "current";
+    result.addHeader("Content-Type", "text/html");
+    const response = createCapturedResponse();
+
+    result.sendResponse(response as unknown as ServerResponse);
+
+    assert.equal(response.status, 202);
+    assert.equal(response.body, '{"ok":true}');
+    assert.equal(response.headers["x-current"], "current");
+    assert.equal(response.headers["x-inherited"], undefined);
+    assert.equal(response.headers["content-type"], "application/json");
+  });
+
+  it("Sends HEAD without a body and closes an attached stream", () => {
+    const result = new LocalHTTPResult(204, { ignored: true });
+    const stream = result.getWriteStream("text/event-stream", 206);
+    const response = createCapturedResponse();
+
+    result.sendHeadResponse(response as unknown as ServerResponse);
+
+    assert.equal(response.status, 206);
+    assert.equal(response.body, undefined);
+    assert.equal(response.headers["content-type"], "text/event-stream");
+    assert.equal(response.ended, true);
+    assert.equal(stream.writableEnded, true);
+  });
+
+  it("Ends an aborted stream response without piping", () => {
+    const result = new LocalHTTPResult();
+    result.getWriteStream();
+    const response = createCapturedResponse();
+
+    result.sendResponse(response as unknown as ServerResponse, true);
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body, "");
+    assert.equal(response.ended, true);
+  });
+});
 
 describe("HTTPResult error logging", () => {
   const logs: Log[] = [];

@@ -65,7 +65,7 @@ export class HTTPResult {
   /**
    * Additional response headers
    */
-  private readonly headers: Record<string, string> = {};
+  private headers?: Record<string, string>;
 
   /**
    * Create a new HTTPResult from the given body or previous HTTPResult and the provided headers.
@@ -150,6 +150,13 @@ export class HTTPResult {
     return this.contentType;
   }
 
+  private getMutableHeaders(): Record<string, string> {
+    if (!this.headers) {
+      this.headers = {};
+    }
+    return this.headers;
+  }
+
   /**
    * Add an additional header to the response.
    *
@@ -157,7 +164,7 @@ export class HTTPResult {
    * @param value Header value
    */
   public addHeader(name: string, value: string) {
-    this.headers[name] = value;
+    this.getMutableHeaders()[name] = value;
   }
 
   /**
@@ -166,7 +173,9 @@ export class HTTPResult {
    * @param name Header name
    */
   public removeHeader(name: string) {
-    delete this.headers[name];
+    if (this.headers) {
+      delete this.headers[name];
+    }
   }
 
   /**
@@ -175,7 +184,7 @@ export class HTTPResult {
    * @returns Headers object
    */
   public getHeaders(): Record<string, string> {
-    return this.headers;
+    return this.getMutableHeaders();
   }
 
   /**
