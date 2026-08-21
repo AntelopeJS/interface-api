@@ -50,6 +50,22 @@ export type ControllerClass<T = Record<string, any>> = Class<T> & {
 };
 
 const SERVER_ERROR_BODY_LOG_LIMIT = 2048;
+const PAYLOAD_TOO_LARGE_STATUS = 413;
+const PAYLOAD_TOO_LARGE_MESSAGE = "Payload Too Large";
+
+/**
+ * Default maximum buffered request body size in bytes.
+ */
+export const DEFAULT_REQUEST_BODY_LIMIT = 1024 * 1024;
+
+interface RequestBodyState {
+  buffers: Buffer[];
+  didExceed: boolean;
+  length: number;
+  limit: number;
+}
+
+const requestBodyStates = new WeakMap<RequestContext, RequestBodyState>();
 
 /**
  * Result object of an API call.
@@ -1113,30 +1129,97 @@ export const WebsocketHandler = MakeMethodDecorator(
  * Get the body from a RequestContext object.
  *
  * @param context Request context
+ * @param limit Maximum body size in bytes
  * @returns Body buffer
  */
-export function ReadBody(context: RequestContext): Promise<Buffer> {
-  if (context.body === undefined) {
-    context.body = new Promise((resolve, reject) => {
-      const buffers: Buffer[] = [];
-      context.rawRequest.on("readable", () => {
-        while (true) {
-          const chunk = context.rawRequest.read() as Buffer | null;
-          if (!chunk) {
-            break;
-          }
-          buffers.push(chunk);
-        }
-      });
-
-      context.rawRequest.on("end", () => {
-        resolve(Buffer.concat(buffers));
-      });
-
-      context.rawRequest.on("error", reject);
-    });
+export function ReadBody(
+  context: RequestContext,
+  limit = DEFAULT_REQUEST_BODY_LIMIT,
+): Promise<Buffer> {
+  let state = requestBodyStates.get(context);
+  let shouldRestart = false;
+  if (state) {
+    const previousLimit = state.limit;
+    state.limit = Math.max(state.limit, limit);
+    shouldRestart =
+      state.didExceed &&
+      state.limit > previousLimit &&
+      state.length <= state.limit;
+  } else {
+    state = { buffers: [], didExceed: false, length: 0, limit };
+    requestBodyStates.set(context, state);
   }
-  return context.body as Promise<Buffer>;
+  if (context.body === undefined || shouldRestart) {
+    state.didExceed = false;
+    context.body = Promise.resolve().then(() =>
+      readRequestBody(context.rawRequest, state),
+    );
+  }
+  return (context.body as Promise<Buffer>).then((body) =>
+    enforceBodyLimit(body, limit),
+  );
+}
+
+function readRequestBody(
+  request: IncomingMessage,
+  state: RequestBodyState,
+): Promise<Buffer> {
+  const contentLength = Number(request.headers["content-length"]);
+  if (contentLength > state.limit) {
+    state.didExceed = true;
+    request.pause();
+    return Promise.reject(createPayloadTooLargeResult());
+  }
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      request.off("data", onData);
+      request.off("end", onEnd);
+      request.off("error", onError);
+    };
+    const onData = (chunk: Buffer | string) => {
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      state.length += buffer.length;
+      state.buffers.push(buffer);
+      if (state.length <= state.limit) {
+        return;
+      }
+      state.didExceed = true;
+      cleanup();
+      request.pause();
+      reject(createPayloadTooLargeResult());
+    };
+    const onEnd = () => {
+      cleanup();
+      resolve(joinRequestBody(state));
+    };
+    const onError = (error: Error) => {
+      cleanup();
+      reject(error);
+    };
+
+    request.on("data", onData);
+    request.once("end", onEnd);
+    request.once("error", onError);
+    request.resume();
+  });
+}
+
+function joinRequestBody(state: RequestBodyState): Buffer {
+  const body = Buffer.concat(state.buffers, state.length);
+  state.buffers = [];
+  return body;
+}
+
+function enforceBodyLimit(body: Buffer, limit: number): Buffer {
+  if (body.length > limit) {
+    throw createPayloadTooLargeResult();
+  }
+  return body;
+}
+
+function createPayloadTooLargeResult(): HTTPResult {
+  return new HTTPResult(PAYLOAD_TOO_LARGE_STATUS, PAYLOAD_TOO_LARGE_MESSAGE);
 }
 
 /**
@@ -1213,6 +1296,8 @@ export function AddParameterModifier(
  * This is useful for processing raw data from the client, such as file uploads
  * or custom data formats.
  *
+ * @param limit Maximum body size in bytes
+ *
  * Example:
  * ```ts
  * @Post()
@@ -1222,8 +1307,11 @@ export function AddParameterModifier(
  * }
  * ```
  */
-export const RawBody = MakeParameterAndPropertyDecorator((target, key, param) =>
-  SetParameterProvider(target, key, param, ReadBody),
+export const RawBody = MakeParameterAndPropertyDecorator(
+  (target, key, param, limit: number = DEFAULT_REQUEST_BODY_LIMIT) =>
+    SetParameterProvider(target, key, param, (context) =>
+      ReadBody(context, limit),
+    ),
 );
 
 /**
@@ -1232,6 +1320,8 @@ export const RawBody = MakeParameterAndPropertyDecorator((target, key, param) =>
  * Parses the HTTP request body as JSON and provides the resulting object.
  * This is useful for handling JSON payloads in POST, PUT, and other methods
  * that accept request bodies.
+ *
+ * @param limit Maximum body size in bytes
  *
  * Example:
  * ```ts
@@ -1244,9 +1334,9 @@ export const RawBody = MakeParameterAndPropertyDecorator((target, key, param) =>
  * ```
  */
 export const JSONBody = MakeParameterAndPropertyDecorator(
-  (target, key, index) => {
+  (target, key, index, limit: number = DEFAULT_REQUEST_BODY_LIMIT) => {
     SetParameterProvider(target, key, index, (ctx: RequestContext) =>
-      ReadBody(ctx).then((body: unknown) => {
+      ReadBody(ctx, limit).then((body: unknown) => {
         if (!body || (body instanceof Buffer && body.length === 0)) {
           return undefined;
         }

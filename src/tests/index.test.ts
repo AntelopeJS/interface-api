@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import type { ServerResponse } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { PassThrough } from "node:stream";
 import {
   Connection,
@@ -37,7 +37,11 @@ import logListener, {
 } from "@antelopejs/interface-core/logging/listener";
 import sinon, { type SinonSpy } from "sinon";
 import WebSocket from "ws";
-import { HTTPResult as LocalHTTPResult } from "../index";
+import {
+  DEFAULT_REQUEST_BODY_LIMIT,
+  HTTPResult as LocalHTTPResult,
+  ReadBody,
+} from "../index";
 
 const SpyMethod = MakeMethodDecorator((_target, _key, descriptor) => {
   descriptor.value = sinon.spy(descriptor.value);
@@ -1215,6 +1219,118 @@ describe("WebSocket", () => {
       ws.on("close", resolve);
       testWSSocket.close();
     });
+  });
+});
+
+type BodyRequest = PassThrough & IncomingMessage;
+
+interface BodyTestContext {
+  context: RequestContext;
+  request: BodyRequest;
+}
+
+function createBodyTestContext(contentLength?: number): BodyTestContext {
+  const request = new PassThrough() as BodyRequest;
+  request.headers = {};
+  if (contentLength !== undefined) {
+    request.headers["content-length"] = contentLength.toString();
+  }
+  return {
+    request,
+    context: {
+      rawRequest: request,
+      rawResponse: {} as ServerResponse,
+      url: new URL(URL_BASE),
+      routeParameters: {},
+      response: new LocalHTTPResult(),
+    },
+  };
+}
+
+function assertBodyListenersRemoved(request: BodyRequest): void {
+  assert.equal(request.listenerCount("data"), 0);
+  assert.equal(request.listenerCount("end"), 0);
+  assert.equal(request.listenerCount("error"), 0);
+}
+
+async function assertPayloadTooLarge(body: Promise<Buffer>): Promise<void> {
+  await assert.rejects(body, (error) => {
+    assert(error instanceof LocalHTTPResult);
+    assert.equal(error.getStatus(), 413);
+    assert.equal(error.getBody(), "Payload Too Large");
+    return true;
+  });
+}
+
+describe("ReadBody limits", () => {
+  it("Accepts a normal body with the default limit", async () => {
+    const test = createBodyTestContext();
+    const body = ReadBody(test.context);
+    test.request.end("normal body");
+
+    assert.equal((await body).toString(), "normal body");
+    assertBodyListenersRemoved(test.request);
+  });
+
+  it("Accepts a body exactly at the configured limit", async () => {
+    const test = createBodyTestContext(4);
+    const body = ReadBody(test.context, 4);
+    test.request.end("test");
+
+    assert.equal((await body).toString(), "test");
+    assertBodyListenersRemoved(test.request);
+  });
+
+  it("Rejects an oversized Content-Length before adding listeners", async () => {
+    const test = createBodyTestContext(DEFAULT_REQUEST_BODY_LIMIT + 1);
+
+    await assertPayloadTooLarge(ReadBody(test.context));
+    assert.equal(test.request.isPaused(), true);
+    assertBodyListenersRemoved(test.request);
+  });
+
+  it("Rejects and stops an oversized chunked body", async () => {
+    const test = createBodyTestContext();
+    const body = ReadBody(test.context, 4);
+    test.request.write("test");
+    test.request.write("!");
+
+    await assertPayloadTooLarge(body);
+    assert.equal(test.request.isPaused(), true);
+    assertBodyListenersRemoved(test.request);
+  });
+
+  it("Applies each limit across concurrent consumers", async () => {
+    const test = createBodyTestContext(5);
+    const permissiveBody = ReadBody(test.context, 8);
+    const strictBody = ReadBody(test.context, 4);
+    test.request.end("12345");
+
+    assert.equal((await permissiveBody).toString(), "12345");
+    await assertPayloadTooLarge(strictBody);
+    assertBodyListenersRemoved(test.request);
+  });
+
+  it("Applies a stricter limit to an already cached body", async () => {
+    const test = createBodyTestContext(5);
+    const body = ReadBody(test.context, 8);
+    test.request.end("12345");
+    assert.equal((await body).toString(), "12345");
+
+    await assertPayloadTooLarge(ReadBody(test.context, 4));
+    assertBodyListenersRemoved(test.request);
+  });
+
+  it("Resumes for a permissive consumer after an earlier rejection", async () => {
+    const test = createBodyTestContext();
+    const strictBody = ReadBody(test.context, 4);
+    test.request.write("12345");
+    await assertPayloadTooLarge(strictBody);
+
+    const body = ReadBody(test.context, 8);
+    test.request.end();
+    assert.equal((await body).toString(), "12345");
+    assertBodyListenersRemoved(test.request);
   });
 });
 
