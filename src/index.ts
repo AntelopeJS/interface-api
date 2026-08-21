@@ -762,13 +762,25 @@ function notifyRouteUnregistered(id: string): void {
   notifyRegisteredRoutesObservers((observer) => observer.onUnregister(id));
 }
 
+function createRegisteredRoutesUnsubscribe(
+  observer: RegisteredRoutesObserver,
+  subscription: symbol,
+): () => void {
+  return () => {
+    if (registeredRoutesObservers.get(observer) === subscription) {
+      registeredRoutesObservers.delete(observer);
+    }
+  };
+}
+
 /**
  * Observes complete registered route handlers.
  *
  * Routes that already exist are replayed synchronously before this function
  * returns. Later registrations and removals are multicast to every subscribed
  * observer. Observer errors are logged without interrupting replay, other
- * observers, or route lifecycle operations.
+ * observers, or route lifecycle operations. Repeated calls with the same
+ * observer share one active subscription.
  *
  * @param observer Route lifecycle observer.
  * @returns An idempotent function that stops future notifications.
@@ -776,6 +788,10 @@ function notifyRouteUnregistered(id: string): void {
 export function ObserveRegisteredRoutes(
   observer: RegisteredRoutesObserver,
 ): () => void {
+  const existingSubscription = registeredRoutesObservers.get(observer);
+  if (existingSubscription) {
+    return createRegisteredRoutesUnsubscribe(observer, existingSubscription);
+  }
   const subscription = Symbol();
   registeredRoutesObservers.set(observer, subscription);
   for (const [id, handler] of Array.from(routesList)) {
@@ -789,11 +805,7 @@ export function ObserveRegisteredRoutes(
       current.onRegister(id, handler),
     );
   }
-  return () => {
-    if (registeredRoutesObservers.get(observer) === subscription) {
-      registeredRoutesObservers.delete(observer);
-    }
-  };
+  return createRegisteredRoutesUnsubscribe(observer, subscription);
 }
 
 /**

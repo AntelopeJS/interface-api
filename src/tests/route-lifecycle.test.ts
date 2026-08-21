@@ -365,6 +365,20 @@ describe("ObserveRegisteredRoutes", () => {
     assert.deepEqual(observer.unregistered, []);
   });
 
+  it("shares one subscription for repeated observer objects", () => {
+    const observer = new RecordingRoutesObserver();
+    const firstUnsubscribe = observe(observer);
+    const secondUnsubscribe = observe(observer);
+    observer.clear();
+
+    firstUnsubscribe();
+    register(handlerAt("/observer/repeated-subscription"));
+    secondUnsubscribe();
+
+    assert.deepEqual(observer.registered, []);
+    assert.deepEqual(observer.unregistered, []);
+  });
+
   it("isolates throwing observers from routing and other observers", () => {
     const throwing = new ThrowingRoutesObserver();
     const recording = new RecordingRoutesObserver();
