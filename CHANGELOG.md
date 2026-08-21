@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.12
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.11...v0.0.12)
+
+### 🩹 Fixes
+
+- **http:** Limit buffered request bodies ([#15](https://github.com/AntelopeJS/interface-api/pull/15))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli <upd4ting@gmail.com>
+
 ## v0.0.11
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.10...v0.0.11)
