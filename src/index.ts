@@ -873,10 +873,38 @@ export const routesProxy: RegisteringProxy<
 > = new RoutesProxy();
 let nextId = 0;
 
+function bindComputedParameter(
+  parameter: ComputedParameter,
+): ComputedParameter {
+  return {
+    provider: parameter.provider
+      ? BindToCurrentModuleContext(parameter.provider)
+      : undefined,
+    modifiers: parameter.modifiers.map((modifier) =>
+      BindToCurrentModuleContext(modifier),
+    ),
+  };
+}
+
+function bindOptionalComputedParameter(parameter: ComputedParameter | null) {
+  return parameter ? bindComputedParameter(parameter) : null;
+}
+
+function bindComputedProperties(properties: Record<string, ComputedParameter>) {
+  return Object.fromEntries(
+    Object.entries(properties).map(([key, parameter]) => [
+      key,
+      bindComputedParameter(parameter),
+    ]),
+  );
+}
+
 function createProviderRouteHandler(handler: RouteHandler): RouteHandler {
   return {
     ...handler,
     callback: BindToCurrentModuleContext(handler.callback),
+    parameters: handler.parameters.map(bindOptionalComputedParameter),
+    properties: bindComputedProperties(handler.properties),
   };
 }
 
