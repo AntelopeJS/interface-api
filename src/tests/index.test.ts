@@ -1300,16 +1300,14 @@ describe("ReadBody limits", () => {
     assertBodyListenersRemoved(test.request);
   });
 
-  it("Applies the strictest limit across concurrent consumers", async () => {
+  it("Applies each limit across concurrent consumers", async () => {
     const test = createBodyTestContext(5);
     const permissiveBody = ReadBody(test.context, 8);
     const strictBody = ReadBody(test.context, 4);
+    test.request.end("12345");
 
-    await Promise.all([
-      assertPayloadTooLarge(permissiveBody),
-      assertPayloadTooLarge(strictBody),
-    ]);
-    assert.equal(test.request.isPaused(), true);
+    assert.equal((await permissiveBody).toString(), "12345");
+    await assertPayloadTooLarge(strictBody);
     assertBodyListenersRemoved(test.request);
   });
 

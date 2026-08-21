@@ -1135,7 +1135,7 @@ export function ReadBody(
 ): Promise<Buffer> {
   let state = requestBodyStates.get(context);
   if (state) {
-    state.limit = Math.min(state.limit, limit);
+    state.limit = Math.max(state.limit, limit);
   } else {
     state = { limit };
     requestBodyStates.set(context, state);
