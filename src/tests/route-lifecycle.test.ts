@@ -22,6 +22,8 @@ interface ProxyCall {
   kind: "register" | "unregister";
 }
 
+type RouteRegistrationCallback = (id: string, handler: RouteHandler) => void;
+
 class RecordingRoutesObserver implements RegisteredRoutesObserver {
   registered: RegisteredRouteEvent[] = [];
   unregistered: string[] = [];
@@ -37,6 +39,17 @@ class RecordingRoutesObserver implements RegisteredRoutesObserver {
   clear(): void {
     this.registered.length = 0;
     this.unregistered.length = 0;
+  }
+}
+
+class CallbackRoutesObserver extends RecordingRoutesObserver {
+  constructor(private readonly callback: RouteRegistrationCallback) {
+    super();
+  }
+
+  override onRegister(id: string, handler: RouteHandler): void {
+    super.onRegister(id, handler);
+    this.callback(id, handler);
   }
 }
 
@@ -259,6 +272,43 @@ describe("ObserveRegisteredRoutes", () => {
       [first, second].map((observer) => observer.unregistered[0]),
       [id.toString(), id.toString()],
     );
+  });
+
+  it("does not duplicate live events for observers added during emission", () => {
+    const location = "/observer/reentrant-subscription";
+    const second = new RecordingRoutesObserver();
+    const first = new CallbackRoutesObserver((_id, handler) => {
+      if (handler.location === location) {
+        observe(second);
+      }
+    });
+    observe(first);
+
+    const id = register(handlerAt(location));
+
+    assert.equal(
+      second.registered.filter((event) => event.id === id.toString()).length,
+      1,
+    );
+  });
+
+  it("skips routes removed during synchronous replay", () => {
+    const triggerLocation = "/observer/replay-trigger";
+    register(handlerAt(triggerLocation));
+    const removedId = register(handlerAt("/observer/replay-removed"));
+    const observer = new CallbackRoutesObserver((_id, handler) => {
+      if (handler.location === triggerLocation) {
+        UnregisterRoute(removedId);
+      }
+    });
+
+    observe(observer);
+
+    assert.equal(
+      observer.registered.some((event) => event.id === removedId.toString()),
+      false,
+    );
+    assert(observer.unregistered.includes(removedId.toString()));
   });
 
   it("returns an idempotent unsubscribe function", () => {

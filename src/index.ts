@@ -740,7 +740,7 @@ function notifyRegisteredRoutesObserver(
 function notifyRegisteredRoutesObservers(
   notification: RegisteredRoutesNotification,
 ): void {
-  for (const observer of registeredRoutesObservers) {
+  for (const observer of Array.from(registeredRoutesObservers)) {
     notifyRegisteredRoutesObserver(observer, notification);
   }
 }
@@ -771,6 +771,9 @@ export function ObserveRegisteredRoutes(
 ): () => void {
   registeredRoutesObservers.add(observer);
   for (const [id, handler] of Array.from(routesList)) {
+    if (routesList.get(id) !== handler) {
+      continue;
+    }
     notifyRegisteredRoutesObserver(observer, (current) =>
       current.onRegister(id, handler),
     );
