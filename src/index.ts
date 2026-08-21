@@ -724,7 +724,7 @@ const REGISTERED_ROUTES_OBSERVER_ERROR = "Registered routes observer failed";
  * do not accumulate across module reloads.
  */
 const routesList = new Map<string, RouteHandler>();
-const registeredRoutesObservers = new Set<RegisteredRoutesObserver>();
+const registeredRoutesObservers = new Map<RegisteredRoutesObserver, symbol>();
 
 function notifyRegisteredRoutesObserver(
   observer: RegisteredRoutesObserver,
@@ -740,7 +740,12 @@ function notifyRegisteredRoutesObserver(
 function notifyRegisteredRoutesObservers(
   notification: RegisteredRoutesNotification,
 ): void {
-  for (const observer of Array.from(registeredRoutesObservers)) {
+  for (const [observer, subscription] of Array.from(
+    registeredRoutesObservers,
+  )) {
+    if (registeredRoutesObservers.get(observer) !== subscription) {
+      continue;
+    }
     notifyRegisteredRoutesObserver(observer, notification);
   }
 }
@@ -769,8 +774,12 @@ function notifyRouteUnregistered(id: string): void {
 export function ObserveRegisteredRoutes(
   observer: RegisteredRoutesObserver,
 ): () => void {
-  registeredRoutesObservers.add(observer);
+  const subscription = Symbol();
+  registeredRoutesObservers.set(observer, subscription);
   for (const [id, handler] of Array.from(routesList)) {
+    if (registeredRoutesObservers.get(observer) !== subscription) {
+      break;
+    }
     if (routesList.get(id) !== handler) {
       continue;
     }
@@ -779,7 +788,9 @@ export function ObserveRegisteredRoutes(
     );
   }
   return () => {
-    registeredRoutesObservers.delete(observer);
+    if (registeredRoutesObservers.get(observer) === subscription) {
+      registeredRoutesObservers.delete(observer);
+    }
   };
 }
 

@@ -292,6 +292,25 @@ describe("ObserveRegisteredRoutes", () => {
     );
   });
 
+  it("does not notify observers removed during emission", () => {
+    const location = "/observer/reentrant-unsubscribe";
+    let unsubscribeSecond = () => {};
+    const first = new CallbackRoutesObserver((_id, handler) => {
+      if (handler.location === location) {
+        unsubscribeSecond();
+      }
+    });
+    const second = new RecordingRoutesObserver();
+    observe(first);
+    unsubscribeSecond = observe(second);
+    first.clear();
+    second.clear();
+
+    register(handlerAt(location));
+
+    assert.deepEqual(second.registered, []);
+  });
+
   it("skips routes removed during synchronous replay", () => {
     const triggerLocation = "/observer/replay-trigger";
     register(handlerAt(triggerLocation));
