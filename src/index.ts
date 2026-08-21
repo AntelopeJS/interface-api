@@ -13,6 +13,10 @@ import {
   MakeParameterDecorator,
 } from "@antelopejs/interface-core/decorators";
 import { Logging } from "@antelopejs/interface-core/logging";
+import {
+  BindToCurrentModuleContext,
+  GetModuleContext,
+} from "@antelopejs/interface-core/modules";
 
 /**
  * @internal
@@ -724,6 +728,7 @@ const REGISTERED_ROUTES_OBSERVER_ERROR = "Registered routes observer failed";
  * do not accumulate across module reloads.
  */
 const routesList = new Map<string, RouteHandler>();
+const routeOwners = new Map<string, string | undefined>();
 const registeredRoutesObservers = new Map<RegisteredRoutesObserver, symbol>();
 
 function notifyRegisteredRoutesObserver(
@@ -819,23 +824,43 @@ class RoutesProxy extends RegisteringProxy<
 > {
   override unregister(id: string) {
     const wasRegistered = routesList.delete(id);
-    super.unregister(id);
-    if (wasRegistered) {
-      notifyRouteUnregistered(id);
+    routeOwners.delete(id);
+    try {
+      super.unregister(id);
+    } finally {
+      if (wasRegistered) {
+        notifyRouteUnregistered(id);
+      }
     }
   }
 
   override unregisterModule(mod: string) {
-    const removedIds: string[] = [];
-    for (const [id, handler] of routesList) {
-      if (handler.module === mod) {
-        routesList.delete(id);
-        removedIds.push(id);
-      }
-    }
-    super.unregisterModule(mod);
-    for (const id of removedIds) {
-      notifyRouteUnregistered(id);
+    this.unregisterRoutes(
+      Array.from(routesList)
+        .filter(([, handler]) => handler.module === mod)
+        .map(([id]) => id),
+      () => super.unregisterModule(mod),
+    );
+  }
+
+  override unregisterOwner(owner: string) {
+    this.unregisterRoutes(
+      Array.from(routeOwners)
+        .filter(([, routeOwner]) => routeOwner === owner)
+        .map(([id]) => id),
+      () => super.unregisterOwner(owner),
+    );
+  }
+
+  private unregisterRoutes(ids: string[], unregister: () => void) {
+    ids.forEach((id) => {
+      routesList.delete(id);
+      routeOwners.delete(id);
+    });
+    try {
+      unregister();
+    } finally {
+      ids.forEach(notifyRouteUnregistered);
     }
   }
 }
@@ -847,6 +872,14 @@ export const routesProxy: RegisteringProxy<
   (id: string, handler: RouteHandler) => void
 > = new RoutesProxy();
 let nextId = 0;
+
+function createProviderRouteHandler(handler: RouteHandler): RouteHandler {
+  return {
+    ...handler,
+    callback: BindToCurrentModuleContext(handler.callback),
+  };
+}
+
 /**
  * Register a RouteHandler to the API.
  *
@@ -855,18 +888,18 @@ let nextId = 0;
  */
 export function RegisterRoute(handler: RouteHandler) {
   const id = nextId++;
-  // Resolve the owning module here, while the registering controller's frame is
-  // still on the stack (RegisterRoute runs synchronously during module load).
-  // Enrich a shallow copy rather than mutating the caller's handler object, so
-  // onRegister subscribers and getRegisteredRoutes both see `module` without the
-  // input object gaining an unexpected property.
-  const enriched: RouteHandler = { ...handler, module: GetResponsibleModule() };
+  const context = GetModuleContext();
+  const module = context?.module ?? GetResponsibleModule();
+  const owner = context?.owner ?? module;
+  const registeredHandler: RouteHandler = { ...handler, module };
+  const providerHandler = createProviderRouteHandler(registeredHandler);
   Logging.Debug(
-    `Registered ${enriched.method.toUpperCase()} ${enriched.location} (${enriched.callback.name || "anonymous"})`,
+    `Registered ${registeredHandler.method.toUpperCase()} ${registeredHandler.location} (${registeredHandler.callback.name || "anonymous"})`,
   );
-  routesProxy.register(id.toString(), enriched);
-  routesList.set(id.toString(), enriched);
-  notifyRouteRegistered(id.toString(), enriched);
+  routesProxy.register(id.toString(), providerHandler);
+  routesList.set(id.toString(), registeredHandler);
+  routeOwners.set(id.toString(), owner);
+  notifyRouteRegistered(id.toString(), registeredHandler);
   return id;
 }
 
