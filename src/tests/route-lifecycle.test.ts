@@ -311,6 +311,28 @@ describe("ObserveRegisteredRoutes", () => {
     assert.deepEqual(second.registered, []);
   });
 
+  it("does not emit stale registrations after reentrant removal", () => {
+    const location = "/observer/reentrant-removal";
+    const first = new CallbackRoutesObserver((id, handler) => {
+      if (handler.location === location) {
+        UnregisterRoute(Number(id));
+      }
+    });
+    const second = new RecordingRoutesObserver();
+    observe(first);
+    observe(second);
+    first.clear();
+    second.clear();
+
+    const id = register(handlerAt(location));
+
+    assert.equal(
+      second.registered.some((event) => event.id === id.toString()),
+      false,
+    );
+    assert(second.unregistered.includes(id.toString()));
+  });
+
   it("skips routes removed during synchronous replay", () => {
     const triggerLocation = "/observer/replay-trigger";
     register(handlerAt(triggerLocation));

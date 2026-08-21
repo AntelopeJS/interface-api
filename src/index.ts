@@ -751,9 +751,11 @@ function notifyRegisteredRoutesObservers(
 }
 
 function notifyRouteRegistered(id: string, handler: RouteHandler): void {
-  notifyRegisteredRoutesObservers((observer) =>
-    observer.onRegister(id, handler),
-  );
+  notifyRegisteredRoutesObservers((observer) => {
+    if (routesList.get(id) === handler) {
+      observer.onRegister(id, handler);
+    }
+  });
 }
 
 function notifyRouteUnregistered(id: string): void {
