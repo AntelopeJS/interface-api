@@ -58,6 +58,12 @@ const PAYLOAD_TOO_LARGE_MESSAGE = "Payload Too Large";
  */
 export const DEFAULT_REQUEST_BODY_LIMIT = 1024 * 1024;
 
+interface RequestBodyState {
+  limit: number;
+}
+
+const requestBodyStates = new WeakMap<RequestContext, RequestBodyState>();
+
 /**
  * Result object of an API call.
  *
@@ -1127,18 +1133,29 @@ export function ReadBody(
   context: RequestContext,
   limit = DEFAULT_REQUEST_BODY_LIMIT,
 ): Promise<Buffer> {
-  if (context.body === undefined) {
-    context.body = readRequestBody(context.rawRequest, limit);
+  let state = requestBodyStates.get(context);
+  if (state) {
+    state.limit = Math.min(state.limit, limit);
+  } else {
+    state = { limit };
+    requestBodyStates.set(context, state);
   }
-  return context.body as Promise<Buffer>;
+  if (context.body === undefined) {
+    context.body = Promise.resolve().then(() =>
+      readRequestBody(context.rawRequest, state),
+    );
+  }
+  return (context.body as Promise<Buffer>).then((body) =>
+    enforceBodyLimit(body, limit),
+  );
 }
 
 function readRequestBody(
   request: IncomingMessage,
-  limit: number,
+  state: RequestBodyState,
 ): Promise<Buffer> {
   const contentLength = Number(request.headers["content-length"]);
-  if (contentLength > limit) {
+  if (contentLength > state.limit) {
     request.pause();
     return Promise.reject(createPayloadTooLargeResult());
   }
@@ -1154,7 +1171,7 @@ function readRequestBody(
     const onData = (chunk: Buffer | string) => {
       const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
       length += buffer.length;
-      if (length <= limit) {
+      if (length <= state.limit) {
         buffers.push(buffer);
         return;
       }
@@ -1175,6 +1192,13 @@ function readRequestBody(
     request.once("end", onEnd);
     request.once("error", onError);
   });
+}
+
+function enforceBodyLimit(body: Buffer, limit: number): Buffer {
+  if (body.length > limit) {
+    throw createPayloadTooLargeResult();
+  }
+  return body;
 }
 
 function createPayloadTooLargeResult(): HTTPResult {

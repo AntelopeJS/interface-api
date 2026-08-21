@@ -1299,6 +1299,29 @@ describe("ReadBody limits", () => {
     assert.equal(test.request.isPaused(), true);
     assertBodyListenersRemoved(test.request);
   });
+
+  it("Applies the strictest limit across concurrent consumers", async () => {
+    const test = createBodyTestContext(5);
+    const permissiveBody = ReadBody(test.context, 8);
+    const strictBody = ReadBody(test.context, 4);
+
+    await Promise.all([
+      assertPayloadTooLarge(permissiveBody),
+      assertPayloadTooLarge(strictBody),
+    ]);
+    assert.equal(test.request.isPaused(), true);
+    assertBodyListenersRemoved(test.request);
+  });
+
+  it("Applies a stricter limit to an already cached body", async () => {
+    const test = createBodyTestContext(5);
+    const body = ReadBody(test.context, 8);
+    test.request.end("12345");
+    assert.equal((await body).toString(), "12345");
+
+    await assertPayloadTooLarge(ReadBody(test.context, 4));
+    assertBodyListenersRemoved(test.request);
+  });
 });
 
 // Keep in sync with SERVER_ERROR_BODY_LOG_LIMIT in src/index.ts
