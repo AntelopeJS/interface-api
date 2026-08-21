@@ -1320,6 +1320,18 @@ describe("ReadBody limits", () => {
     await assertPayloadTooLarge(ReadBody(test.context, 4));
     assertBodyListenersRemoved(test.request);
   });
+
+  it("Resumes for a permissive consumer after an earlier rejection", async () => {
+    const test = createBodyTestContext();
+    const strictBody = ReadBody(test.context, 4);
+    test.request.write("12345");
+    await assertPayloadTooLarge(strictBody);
+
+    const body = ReadBody(test.context, 8);
+    test.request.end();
+    assert.equal((await body).toString(), "12345");
+    assertBodyListenersRemoved(test.request);
+  });
 });
 
 // Keep in sync with SERVER_ERROR_BODY_LOG_LIMIT in src/index.ts

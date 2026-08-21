@@ -59,6 +59,9 @@ const PAYLOAD_TOO_LARGE_MESSAGE = "Payload Too Large";
 export const DEFAULT_REQUEST_BODY_LIMIT = 1024 * 1024;
 
 interface RequestBodyState {
+  buffers: Buffer[];
+  didExceed: boolean;
+  length: number;
   limit: number;
 }
 
@@ -1134,13 +1137,20 @@ export function ReadBody(
   limit = DEFAULT_REQUEST_BODY_LIMIT,
 ): Promise<Buffer> {
   let state = requestBodyStates.get(context);
+  let shouldRestart = false;
   if (state) {
+    const previousLimit = state.limit;
     state.limit = Math.max(state.limit, limit);
+    shouldRestart =
+      state.didExceed &&
+      state.limit > previousLimit &&
+      state.length <= state.limit;
   } else {
-    state = { limit };
+    state = { buffers: [], didExceed: false, length: 0, limit };
     requestBodyStates.set(context, state);
   }
-  if (context.body === undefined) {
+  if (context.body === undefined || shouldRestart) {
+    state.didExceed = false;
     context.body = Promise.resolve().then(() =>
       readRequestBody(context.rawRequest, state),
     );
@@ -1156,13 +1166,12 @@ function readRequestBody(
 ): Promise<Buffer> {
   const contentLength = Number(request.headers["content-length"]);
   if (contentLength > state.limit) {
+    state.didExceed = true;
     request.pause();
     return Promise.reject(createPayloadTooLargeResult());
   }
 
   return new Promise((resolve, reject) => {
-    const buffers: Buffer[] = [];
-    let length = 0;
     const cleanup = () => {
       request.off("data", onData);
       request.off("end", onEnd);
@@ -1170,18 +1179,19 @@ function readRequestBody(
     };
     const onData = (chunk: Buffer | string) => {
       const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-      length += buffer.length;
-      if (length <= state.limit) {
-        buffers.push(buffer);
+      state.length += buffer.length;
+      state.buffers.push(buffer);
+      if (state.length <= state.limit) {
         return;
       }
+      state.didExceed = true;
       cleanup();
       request.pause();
       reject(createPayloadTooLargeResult());
     };
     const onEnd = () => {
       cleanup();
-      resolve(Buffer.concat(buffers, length));
+      resolve(joinRequestBody(state));
     };
     const onError = (error: Error) => {
       cleanup();
@@ -1191,7 +1201,14 @@ function readRequestBody(
     request.on("data", onData);
     request.once("end", onEnd);
     request.once("error", onError);
+    request.resume();
   });
+}
+
+function joinRequestBody(state: RequestBodyState): Buffer {
+  const body = Buffer.concat(state.buffers, state.length);
+  state.buffers = [];
+  return body;
 }
 
 function enforceBodyLimit(body: Buffer, limit: number): Buffer {
