@@ -693,11 +693,92 @@ export interface RouteHandler {
 }
 
 /**
+ * Observer for complete registered route handlers and their removal.
+ */
+export interface RegisteredRoutesObserver {
+  /**
+   * Receives a route registration.
+   *
+   * @param id Route identifier.
+   * @param handler Complete registered route handler.
+   */
+  onRegister(id: string, handler: RouteHandler): void;
+
+  /**
+   * Receives a route removal.
+   *
+   * @param id Route identifier.
+   */
+  onUnregister(id: string): void;
+}
+
+type RegisteredRoutesNotification = (
+  observer: RegisteredRoutesObserver,
+) => void;
+
+const REGISTERED_ROUTES_OBSERVER_ERROR = "Registered routes observer failed";
+
+/**
  * Registered route handlers indexed by their proxy id, mirroring the entries
  * held by {@link routesProxy}. Pruned by {@link RoutesProxy} so stale handlers
  * do not accumulate across module reloads.
  */
 const routesList = new Map<string, RouteHandler>();
+const registeredRoutesObservers = new Set<RegisteredRoutesObserver>();
+
+function notifyRegisteredRoutesObserver(
+  observer: RegisteredRoutesObserver,
+  notification: RegisteredRoutesNotification,
+): void {
+  try {
+    notification(observer);
+  } catch (error) {
+    Logging.Error(REGISTERED_ROUTES_OBSERVER_ERROR, error);
+  }
+}
+
+function notifyRegisteredRoutesObservers(
+  notification: RegisteredRoutesNotification,
+): void {
+  for (const observer of registeredRoutesObservers) {
+    notifyRegisteredRoutesObserver(observer, notification);
+  }
+}
+
+function notifyRouteRegistered(id: string, handler: RouteHandler): void {
+  notifyRegisteredRoutesObservers((observer) =>
+    observer.onRegister(id, handler),
+  );
+}
+
+function notifyRouteUnregistered(id: string): void {
+  notifyRegisteredRoutesObservers((observer) => observer.onUnregister(id));
+}
+
+/**
+ * Observes complete registered route handlers.
+ *
+ * Routes that already exist are replayed synchronously before this function
+ * returns. Later registrations and removals are multicast to every subscribed
+ * observer. Observer errors are logged without interrupting replay, other
+ * observers, or route lifecycle operations.
+ *
+ * @param observer Route lifecycle observer.
+ * @returns An idempotent function that stops future notifications.
+ */
+export function ObserveRegisteredRoutes(
+  observer: RegisteredRoutesObserver,
+): () => void {
+  registeredRoutesObservers.add(observer);
+  for (const [id, handler] of Array.from(routesList)) {
+    notifyRegisteredRoutesObserver(observer, (current) =>
+      current.onRegister(id, handler),
+    );
+  }
+  return () => {
+    registeredRoutesObservers.delete(observer);
+  };
+}
 
 /**
  * RegisteringProxy that also prunes {@link routesList} on the same lifecycle
@@ -709,17 +790,25 @@ class RoutesProxy extends RegisteringProxy<
   (id: string, handler: RouteHandler) => void
 > {
   override unregister(id: string) {
-    routesList.delete(id);
+    const wasRegistered = routesList.delete(id);
     super.unregister(id);
+    if (wasRegistered) {
+      notifyRouteUnregistered(id);
+    }
   }
 
   override unregisterModule(mod: string) {
+    const removedIds: string[] = [];
     for (const [id, handler] of routesList) {
       if (handler.module === mod) {
         routesList.delete(id);
+        removedIds.push(id);
       }
     }
     super.unregisterModule(mod);
+    for (const id of removedIds) {
+      notifyRouteUnregistered(id);
+    }
   }
 }
 
@@ -749,6 +838,7 @@ export function RegisterRoute(handler: RouteHandler) {
   );
   routesProxy.register(id.toString(), enriched);
   routesList.set(id.toString(), enriched);
+  notifyRouteRegistered(id.toString(), enriched);
   return id;
 }
 
