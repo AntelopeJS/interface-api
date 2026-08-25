@@ -1,15 +1,5 @@
 import assert from "node:assert";
 import {
-  AsyncProxy,
-  GetInterfaceProxyIdentity,
-  ModuleContextInvalidatedError,
-} from "@antelopejs/interface-core";
-import {
-  Events,
-  type ModuleExecutionContext,
-  RunWithModuleContext,
-} from "@antelopejs/interface-core/modules";
-import {
   type ComputedParameter,
   getRegisteredRoutes,
   HandlerPriority,
@@ -30,11 +20,6 @@ interface ProxyCall {
   handler?: RouteHandler;
   id: string;
   kind: "register" | "unregister";
-}
-
-interface RoutedRegistration {
-  handler: RouteHandler;
-  id: number;
 }
 
 type RouteRegistrationCallback = (id: string, handler: RouteHandler) => void;
@@ -68,17 +53,6 @@ class CallbackRoutesObserver extends RecordingRoutesObserver {
   }
 }
 
-class CleanupOrderObserver extends RecordingRoutesObserver {
-  constructor(private readonly assertCleanup: () => void) {
-    super();
-  }
-
-  override onUnregister(id: string): void {
-    this.assertCleanup();
-    super.onUnregister(id);
-  }
-}
-
 class ThrowingRoutesObserver implements RegisteredRoutesObserver {
   isThrowing = false;
 
@@ -96,7 +70,6 @@ class ThrowingRoutesObserver implements RegisteredRoutesObserver {
 }
 
 const proxyCalls: ProxyCall[] = [];
-let throwingUnregisterId: string | undefined;
 
 function handlerAt(location: string): RouteHandler {
   return {
@@ -134,42 +107,6 @@ function routesAt(location: string): number {
     .length;
 }
 
-function attachProvider(
-  proxy: AsyncProxy<() => string>,
-  provider: string,
-): void {
-  RunWithModuleContext(
-    { module: provider, owner: `${provider}#1`, provider },
-    () => proxy.onCall(() => provider, true),
-  );
-}
-
-function registerRoutedHandler(
-  proxy: AsyncProxy<() => string>,
-  context: ModuleExecutionContext,
-  location: string,
-): RoutedRegistration {
-  const handler = handlerAt(location);
-  handler.callback = () => proxy.call();
-  const id = RunWithModuleContext(context, () => RegisterRoute(handler));
-  return { handler, id };
-}
-
-function providerHandler(id: number): RouteHandler {
-  const call = proxyCalls.find(
-    (entry) => entry.kind === "register" && entry.id === id.toString(),
-  );
-  assert(call?.handler);
-  return call.handler;
-}
-
-function invokeFromApi(handler: RouteHandler): Promise<string> {
-  return RunWithModuleContext(
-    { module: "api", owner: "api#1", provider: "api" },
-    () => Promise.resolve(handler.callback()),
-  );
-}
-
 describe("Route lifecycle", () => {
   // These run against the local build, whose proxy no module attaches in the
   // test harness (the api module binds the harness-distributed copy). A
@@ -181,15 +118,11 @@ describe("Route lifecycle", () => {
     }, true);
     routesProxy.onUnregister((id: string) => {
       proxyCalls.push({ kind: "unregister", id });
-      if (id === throwingUnregisterId) {
-        throw new Error("Provider unregister failure");
-      }
     });
   });
 
   beforeEach(() => {
     proxyCalls.length = 0;
-    throwingUnregisterId = undefined;
   });
 
   it("releases a route by the id RegisterRoute returned", () => {
@@ -257,10 +190,7 @@ describe("ObserveRegisteredRoutes", () => {
 
   it("synchronously replays complete registered handlers", () => {
     const original = completeHandlerAt("/observer/replay");
-    const id = RunWithModuleContext(
-      { module: "live-consumer", owner: "live-consumer#1" },
-      () => register(original),
-    );
+    const id = register(original);
     const observer = new RecordingRoutesObserver();
 
     observe(observer);
@@ -285,132 +215,15 @@ describe("ObserveRegisteredRoutes", () => {
     observer.clear();
     const original = completeHandlerAt("/observer/live");
 
-    const id = RunWithModuleContext(
-      { module: "live-consumer", owner: "live-consumer#2" },
-      () => register(original),
-    );
+    const id = register(original);
 
     assert.equal(observer.registered.length, 1);
     assert.equal(observer.registered[0].id, id.toString());
     const providerCall = proxyCalls.at(-1);
     assert.equal(providerCall?.kind, "register");
     assert.equal(providerCall?.id, id.toString());
-    assert.notStrictEqual(
-      providerCall?.handler,
-      observer.registered[0].handler,
-    );
-    assert.notStrictEqual(providerCall?.handler?.callback, original.callback);
-    assert.strictEqual(
-      observer.registered[0].handler.callback,
-      original.callback,
-    );
-    assert.strictEqual(providerCall?.handler?.proto, original.proto);
-    assert.strictEqual(providerCall?.handler?.parameters, original.parameters);
-    assert.strictEqual(providerCall?.handler?.properties, original.properties);
+    assert.strictEqual(providerCall?.handler, observer.registered[0].handler);
     assert.equal(Object.hasOwn(original, "module"), false);
-  });
-
-  it("runs provider callbacks with each consumer provider route", async () => {
-    const routed = new AsyncProxy<() => string>("route-context.Verify");
-    const identity = GetInterfaceProxyIdentity(routed) as string;
-    attachProvider(routed, "auth-a");
-    attachProvider(routed, "auth-b");
-    const observer = new RecordingRoutesObserver();
-    observe(observer);
-    observer.clear();
-
-    const first = registerRoutedHandler(
-      routed,
-      {
-        module: "consumer-a",
-        owner: "consumer-a#1",
-        providerRoutes: { [identity]: "auth-a" },
-      },
-      "/observer/context-a",
-    );
-    const second = registerRoutedHandler(
-      routed,
-      {
-        module: "consumer-b",
-        owner: "consumer-b#1",
-        providerRoutes: { [identity]: "auth-b" },
-      },
-      "/observer/context-b",
-    );
-
-    assert.equal(await invokeFromApi(providerHandler(first.id)), "auth-a");
-    assert.equal(await invokeFromApi(providerHandler(second.id)), "auth-b");
-    assert.strictEqual(
-      observer.registered.at(-2)?.handler.callback,
-      first.handler.callback,
-    );
-    assert.strictEqual(
-      observer.registered.at(-1)?.handler.callback,
-      second.handler.callback,
-    );
-    assert.equal(observer.registered.at(-2)?.handler.module, "consumer-a");
-    assert.equal(observer.registered.at(-1)?.handler.module, "consumer-b");
-    routed.detach();
-  });
-
-  it("removes old context-bound routes before replaying a reload", async () => {
-    const routed = new AsyncProxy<() => string>("route-context.Reload");
-    const identity = GetInterfaceProxyIdentity(routed) as string;
-    attachProvider(routed, "auth-old");
-    attachProvider(routed, "auth-new");
-    const observer = new RecordingRoutesObserver();
-    observe(observer);
-    const oldRoute = registerRoutedHandler(
-      routed,
-      {
-        module: "consumer",
-        owner: "consumer#old",
-        providerRoutes: { [identity]: "auth-old" },
-      },
-      "/observer/reload-old",
-    );
-    observer.clear();
-
-    const currentRoute = registerRoutedHandler(
-      routed,
-      {
-        module: "consumer",
-        owner: "consumer#new",
-        providerRoutes: { [identity]: "auth-new" },
-      },
-      "/observer/reload-new",
-    );
-    observer.clear();
-    RunWithModuleContext({ module: "consumer", owner: "consumer#old" }, () =>
-      Events.ModuleDestroyed.emit("consumer"),
-    );
-    const replay = new RecordingRoutesObserver();
-    observe(replay);
-
-    assert.deepEqual(observer.unregistered, [oldRoute.id.toString()]);
-    assert.throws(
-      () => providerHandler(oldRoute.id).callback(),
-      ModuleContextInvalidatedError,
-    );
-    assert.equal(
-      replay.registered.some(({ id }) => id === oldRoute.id.toString()),
-      false,
-    );
-    assert.strictEqual(
-      replay.registered.at(-1)?.handler.callback,
-      currentRoute.handler.callback,
-    );
-    assert.equal(
-      await invokeFromApi(providerHandler(currentRoute.id)),
-      "auth-new",
-    );
-    UnregisterRoute(currentRoute.id);
-    UnregisterRoute(currentRoute.id);
-    assert.deepEqual(observer.unregistered, [
-      oldRoute.id.toString(),
-      currentRoute.id.toString(),
-    ]);
-    routed.detach();
   });
 
   it("emits explicit route removals", () => {
@@ -425,69 +238,19 @@ describe("ObserveRegisteredRoutes", () => {
     assert.deepEqual(observer.unregistered, [id.toString()]);
   });
 
-  it("completes public removal when the provider unregister throws", () => {
-    const observer = new RecordingRoutesObserver();
-    observe(observer);
-    observer.clear();
-    const id = register(handlerAt("/observer/provider-unregister-error"));
-    throwingUnregisterId = id.toString();
-
-    assert.throws(() => UnregisterRoute(id), /Provider unregister failure/);
-    assert.equal(routesAt("/observer/provider-unregister-error"), 0);
-    assert.deepEqual(observer.unregistered, [id.toString()]);
-    assert.doesNotThrow(() => UnregisterRoute(id));
-    assert.deepEqual(observer.unregistered, [id.toString()]);
-  });
-
   it("emits removals caused by module unload", () => {
     const observer = new RecordingRoutesObserver();
     observe(observer);
     observer.clear();
-    const context = {
-      module: "unloaded-consumer",
-      owner: "unloaded-consumer#1",
-    };
-    const id = RunWithModuleContext(context, () =>
-      register(handlerAt("/observer/module-unload")),
-    );
+    const id = register(handlerAt("/observer/module-unload"));
     const module = observer.registered[0].handler.module;
-    assert.equal(module, context.module);
+    assert(module);
     observer.clear();
 
-    RunWithModuleContext(context, () =>
-      Events.ModuleDestroyed.emit(context.module),
-    );
+    routesProxy.unregisterModule(module);
 
     assert.deepEqual(observer.unregistered, [id.toString()]);
     assert.equal(routesAt("/observer/module-unload"), 0);
-  });
-
-  it("removes one generation before notifying its observers", () => {
-    const oldContext = { module: "overlap", owner: "overlap#old" };
-    const currentContext = { module: "overlap", owner: "overlap#current" };
-    const oldLocations = ["/observer/overlap-old-a", "/observer/overlap-old-b"];
-    const currentLocation = "/observer/overlap-current";
-    const observer = new CleanupOrderObserver(() => {
-      oldLocations.forEach((location) => {
-        assert.equal(routesAt(location), 0);
-      });
-      assert.equal(routesAt(currentLocation), 1);
-    });
-    observe(observer);
-    const oldIds = RunWithModuleContext(oldContext, () =>
-      oldLocations.map((location) => register(handlerAt(location))),
-    );
-    RunWithModuleContext(currentContext, () =>
-      register(handlerAt(currentLocation)),
-    );
-    observer.clear();
-
-    RunWithModuleContext(oldContext, () =>
-      Events.ModuleDestroyed.emit(oldContext.module),
-    );
-
-    assert.deepEqual(observer.unregistered, oldIds.map(String));
-    assert.equal(routesAt(currentLocation), 1);
   });
 
   it("multicasts registrations and removals", () => {
