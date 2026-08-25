@@ -12,16 +12,16 @@ import {
   MakeParameterAndPropertyDecorator,
   MakeParameterDecorator,
 } from "@antelopejs/interface-core/decorators";
+import type { InterfaceFacadeScope } from "@antelopejs/interface-core/facades";
 import { Logging } from "@antelopejs/interface-core/logging";
+import { GetModuleContext } from "@antelopejs/interface-core/modules";
 
-/**
- * @internal
- */
-export namespace internal {
-  export const routesProxy = new RegisteringProxy<
+/** @internal */
+export const internal = {} as {
+  readonly routesProxy: RegisteringProxy<
     (id: string, handler: RouteHandler) => void
-  >();
-}
+  >;
+};
 
 export type ControllerClass<T = Record<string, any>> = Class<T> & {
   /**
@@ -724,6 +724,7 @@ const REGISTERED_ROUTES_OBSERVER_ERROR = "Registered routes observer failed";
  * do not accumulate across module reloads.
  */
 const routesList = new Map<string, RouteHandler>();
+const routeOwners = new Map<string, string | undefined>();
 const registeredRoutesObservers = new Map<RegisteredRoutesObserver, symbol>();
 
 function notifyRegisteredRoutesObserver(
@@ -819,23 +820,43 @@ class RoutesProxy extends RegisteringProxy<
 > {
   override unregister(id: string) {
     const wasRegistered = routesList.delete(id);
-    super.unregister(id);
-    if (wasRegistered) {
-      notifyRouteUnregistered(id);
+    routeOwners.delete(id);
+    try {
+      super.unregister(id);
+    } finally {
+      if (wasRegistered) {
+        notifyRouteUnregistered(id);
+      }
     }
   }
 
   override unregisterModule(mod: string) {
-    const removedIds: string[] = [];
-    for (const [id, handler] of routesList) {
-      if (handler.module === mod) {
-        routesList.delete(id);
-        removedIds.push(id);
-      }
-    }
-    super.unregisterModule(mod);
-    for (const id of removedIds) {
-      notifyRouteUnregistered(id);
+    this.unregisterRoutes(
+      Array.from(routesList)
+        .filter(([, handler]) => handler.module === mod)
+        .map(([id]) => id),
+      () => super.unregisterModule(mod),
+    );
+  }
+
+  override unregisterOwner(owner: string) {
+    this.unregisterRoutes(
+      Array.from(routeOwners)
+        .filter(([, routeOwner]) => routeOwner === owner)
+        .map(([id]) => id),
+      () => super.unregisterOwner(owner),
+    );
+  }
+
+  private unregisterRoutes(ids: string[], unregister: () => void) {
+    ids.forEach((id) => {
+      routesList.delete(id);
+      routeOwners.delete(id);
+    });
+    try {
+      unregister();
+    } finally {
+      ids.forEach(notifyRouteUnregistered);
     }
   }
 }
@@ -846,6 +867,10 @@ class RoutesProxy extends RegisteringProxy<
 export const routesProxy: RegisteringProxy<
   (id: string, handler: RouteHandler) => void
 > = new RoutesProxy();
+Object.defineProperty(internal, "routesProxy", {
+  enumerable: false,
+  value: routesProxy,
+});
 let nextId = 0;
 /**
  * Register a RouteHandler to the API.
@@ -855,17 +880,16 @@ let nextId = 0;
  */
 export function RegisterRoute(handler: RouteHandler) {
   const id = nextId++;
-  // Resolve the owning module here, while the registering controller's frame is
-  // still on the stack (RegisterRoute runs synchronously during module load).
-  // Enrich a shallow copy rather than mutating the caller's handler object, so
-  // onRegister subscribers and getRegisteredRoutes both see `module` without the
-  // input object gaining an unexpected property.
-  const enriched: RouteHandler = { ...handler, module: GetResponsibleModule() };
+  const context = GetModuleContext();
+  const module = context?.module ?? GetResponsibleModule();
+  const owner = context?.owner ?? module;
+  const enriched: RouteHandler = { ...handler, module };
   Logging.Debug(
     `Registered ${enriched.method.toUpperCase()} ${enriched.location} (${enriched.callback.name || "anonymous"})`,
   );
   routesProxy.register(id.toString(), enriched);
   routesList.set(id.toString(), enriched);
+  routeOwners.set(id.toString(), owner);
   notifyRouteRegistered(id.toString(), enriched);
   return id;
 }
@@ -1691,3 +1715,34 @@ export const MultiParameter = MakeParameterAndPropertyDecorator(
     });
   },
 );
+
+type DecoratorFactory = (...args: any[]) => (...args: any[]) => unknown;
+
+function bindDecoratorFactory<T extends DecoratorFactory>(
+  scope: InterfaceFacadeScope,
+  factory: T,
+): T {
+  return ((...factoryArgs: Parameters<T>) => {
+    const decorator = factory(...factoryArgs);
+    return (...decoratorArgs: Parameters<ReturnType<T>>) =>
+      scope.run(() => decorator(...decoratorArgs));
+  }) as T;
+}
+
+/** @internal */
+export function BuildInterfaceFacade(scope: InterfaceFacadeScope) {
+  return {
+    RegisterRoute: (handler: RouteHandler) =>
+      scope.run(() => RegisterRoute(handler)),
+    UnregisterRoute: (id: number) => scope.run(() => UnregisterRoute(id)),
+    Route: bindDecoratorFactory(scope, Route),
+    Delete: bindDecoratorFactory(scope, Delete),
+    Get: bindDecoratorFactory(scope, Get),
+    Post: bindDecoratorFactory(scope, Post),
+    Put: bindDecoratorFactory(scope, Put),
+    Prefix: bindDecoratorFactory(scope, Prefix),
+    Postfix: bindDecoratorFactory(scope, Postfix),
+    Monitor: bindDecoratorFactory(scope, Monitor),
+    WebsocketHandler: bindDecoratorFactory(scope, WebsocketHandler),
+  };
+}

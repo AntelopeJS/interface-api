@@ -1,4 +1,11 @@
 import assert from "node:assert";
+import { GetInterfaceProxyIdentity } from "@antelopejs/interface-core";
+import { CreateInterfaceFacade } from "@antelopejs/interface-core/facades";
+import {
+  type ModuleExecutionContext,
+  RunWithModuleContext,
+} from "@antelopejs/interface-core/modules";
+import * as Api from "../index";
 import {
   type ComputedParameter,
   getRegisteredRoutes,
@@ -160,6 +167,96 @@ describe("Route lifecycle", () => {
     assert.doesNotThrow(() => UnregisterRoute(999_999));
 
     assert.equal(getRegisteredRoutes().length, before);
+  });
+});
+
+describe("Interface facade route ownership", () => {
+  const proxyIdentity = GetInterfaceProxyIdentity(routesProxy);
+
+  it("keeps the legacy internal route proxy as a canonical alias", () => {
+    assert.strictEqual(Api.internal.routesProxy, routesProxy);
+    assert.equal(Object.keys(Api.internal).includes("routesProxy"), false);
+  });
+
+  function providerContext(provider: string): ModuleExecutionContext {
+    return {
+      module: provider,
+      owner: `${provider}#1`,
+      provider,
+    };
+  }
+
+  function consumerContext(owner: string, provider: string) {
+    assert(proxyIdentity);
+    return {
+      module: "facade-consumer",
+      owner,
+      providerRoutes: { [proxyIdentity]: provider },
+    };
+  }
+
+  function applyGet(
+    api: typeof Api,
+    location: string,
+    callback: () => string,
+  ): void {
+    const target = { callback };
+    const descriptor = Object.getOwnPropertyDescriptor(target, "callback");
+    assert(descriptor);
+    api.Get(location)(target, "callback", descriptor);
+  }
+
+  it("registers unchanged callbacks with the provider selected per generation", () => {
+    assert(proxyIdentity);
+    const registeredA: RegisteredRouteEvent[] = [];
+    const registeredB: RegisteredRouteEvent[] = [];
+    const unregisteredA: string[] = [];
+    const unregisteredB: string[] = [];
+    const leaseA = RunWithModuleContext(providerContext("api-provider-a"), () =>
+      routesProxy.onHandlers(
+        (id, handler) => registeredA.push({ id, handler }),
+        (id) => unregisteredA.push(id),
+        true,
+      ),
+    );
+    const leaseB = RunWithModuleContext(providerContext("api-provider-b"), () =>
+      routesProxy.onHandlers(
+        (id, handler) => registeredB.push({ id, handler }),
+        (id) => unregisteredB.push(id),
+        true,
+      ),
+    );
+    const oldFacade = CreateInterfaceFacade(
+      Api,
+      consumerContext("facade-consumer#old", "api-provider-a"),
+    );
+    const newFacade = CreateInterfaceFacade(
+      Api,
+      consumerContext("facade-consumer#new", "api-provider-b"),
+    );
+    const oldCallback = () => "old";
+    const newCallback = () => "new";
+    try {
+      applyGet(oldFacade, "/facade/old", oldCallback);
+      applyGet(newFacade, "/facade/new", newCallback);
+
+      assert.equal(registeredA.length, 1);
+      assert.equal(registeredB.length, 1);
+      assert.strictEqual(registeredA[0].handler.callback, oldCallback);
+      assert.strictEqual(registeredB[0].handler.callback, newCallback);
+
+      routesProxy.unregisterOwner("facade-consumer#old");
+
+      assert.deepEqual(unregisteredA, [registeredA[0].id]);
+      assert.deepEqual(unregisteredB, []);
+      assert.equal(routesAt(registeredA[0].handler.location), 0);
+      assert.equal(routesAt(registeredB[0].handler.location), 1);
+    } finally {
+      routesProxy.unregisterOwner("facade-consumer#old");
+      routesProxy.unregisterOwner("facade-consumer#new");
+      routesProxy.detach(leaseA);
+      routesProxy.detach(leaseB);
+    }
   });
 });
 
