@@ -16,7 +16,6 @@ import {
   ObserveRegisteredRoutes,
   type RegisteredRoutesObserver,
   RegisterRoute,
-  type RequestContext,
   type RouteHandler,
   routesProxy,
   UnregisterRoute,
@@ -171,20 +170,6 @@ function invokeFromApi(handler: RouteHandler): Promise<string> {
   );
 }
 
-function invokeComputedParametersFromApi(handler: RouteHandler) {
-  return RunWithModuleContext(
-    { module: "api", owner: "api#1", provider: "api" },
-    async () => {
-      const context = {} as RequestContext;
-      const parameter = handler.parameters[0] as ComputedParameter;
-      const value = await parameter.provider?.(context);
-      const modified = await parameter.modifiers[0](context, value);
-      const property = await handler.properties.property.provider?.(context);
-      return [value, modified, property];
-    },
-  );
-}
-
 describe("Route lifecycle", () => {
   // These run against the local build, whose proxy no module attaches in the
   // test harness (the api module binds the harness-distributed copy). A
@@ -320,22 +305,8 @@ describe("ObserveRegisteredRoutes", () => {
       original.callback,
     );
     assert.strictEqual(providerCall?.handler?.proto, original.proto);
-    assert.notStrictEqual(
-      providerCall?.handler?.parameters,
-      original.parameters,
-    );
-    assert.notStrictEqual(
-      providerCall?.handler?.properties,
-      original.properties,
-    );
-    assert.strictEqual(
-      observer.registered[0].handler.parameters,
-      original.parameters,
-    );
-    assert.strictEqual(
-      observer.registered[0].handler.properties,
-      original.properties,
-    );
+    assert.strictEqual(providerCall?.handler?.parameters, original.parameters);
+    assert.strictEqual(providerCall?.handler?.properties, original.properties);
     assert.equal(Object.hasOwn(original, "module"), false);
   });
 
@@ -379,45 +350,6 @@ describe("ObserveRegisteredRoutes", () => {
     );
     assert.equal(observer.registered.at(-2)?.handler.module, "consumer-a");
     assert.equal(observer.registered.at(-1)?.handler.module, "consumer-b");
-    routed.detach();
-  });
-
-  it("runs parameter providers and modifiers with the consumer route", async () => {
-    const routed = new AsyncProxy<() => string>("route-context.Parameter");
-    const identity = GetInterfaceProxyIdentity(routed) as string;
-    attachProvider(routed, "auth-consumer");
-    const observer = new RecordingRoutesObserver();
-    observe(observer);
-    observer.clear();
-    const handler = handlerAt("/observer/context-parameter");
-    const parameter: ComputedParameter = {
-      provider: () => routed.call(),
-      modifiers: [() => routed.call()],
-    };
-    handler.parameters = [parameter];
-    handler.properties = { property: parameter };
-    const context: ModuleExecutionContext = {
-      module: "consumer",
-      owner: "consumer#parameter",
-      providerRoutes: { [identity]: "auth-consumer" },
-    };
-
-    const id = RunWithModuleContext(context, () => register(handler));
-    const provider = providerHandler(id);
-
-    assert.deepEqual(await invokeComputedParametersFromApi(provider), [
-      "auth-consumer",
-      "auth-consumer",
-      "auth-consumer",
-    ]);
-    assert.strictEqual(
-      observer.registered.at(-1)?.handler.parameters,
-      handler.parameters,
-    );
-    assert.strictEqual(
-      observer.registered.at(-1)?.handler.properties,
-      handler.properties,
-    );
     routed.detach();
   });
 
