@@ -1,72 +1,19 @@
 import assert from "node:assert";
 import {
   type ComputedParameter,
+  getRegisteredRouteHandlers,
   getRegisteredRoutes,
   HandlerPriority,
-  ObserveRegisteredRoutes,
-  type RegisteredRoutesObserver,
   RegisterRoute,
   type RouteHandler,
   routesProxy,
   UnregisterRoute,
 } from "../index";
 
-interface RegisteredRouteEvent {
-  handler: RouteHandler;
-  id: string;
-}
-
 interface ProxyCall {
   handler?: RouteHandler;
   id: string;
   kind: "register" | "unregister";
-}
-
-type RouteRegistrationCallback = (id: string, handler: RouteHandler) => void;
-
-class RecordingRoutesObserver implements RegisteredRoutesObserver {
-  registered: RegisteredRouteEvent[] = [];
-  unregistered: string[] = [];
-
-  onRegister(id: string, handler: RouteHandler): void {
-    this.registered.push({ id, handler });
-  }
-
-  onUnregister(id: string): void {
-    this.unregistered.push(id);
-  }
-
-  clear(): void {
-    this.registered.length = 0;
-    this.unregistered.length = 0;
-  }
-}
-
-class CallbackRoutesObserver extends RecordingRoutesObserver {
-  constructor(private readonly callback: RouteRegistrationCallback) {
-    super();
-  }
-
-  override onRegister(id: string, handler: RouteHandler): void {
-    super.onRegister(id, handler);
-    this.callback(id, handler);
-  }
-}
-
-class ThrowingRoutesObserver implements RegisteredRoutesObserver {
-  isThrowing = false;
-
-  onRegister(): void {
-    if (this.isThrowing) {
-      throw new Error("Register observer failure");
-    }
-  }
-
-  onUnregister(): void {
-    if (this.isThrowing) {
-      throw new Error("Unregister observer failure");
-    }
-  }
 }
 
 const proxyCalls: ProxyCall[] = [];
@@ -163,9 +110,8 @@ describe("Route lifecycle", () => {
   });
 });
 
-describe("ObserveRegisteredRoutes", () => {
+describe("getRegisteredRouteHandlers", () => {
   const routeIds: number[] = [];
-  const subscriptions: Array<() => void> = [];
 
   function register(handler: RouteHandler): number {
     const id = RegisterRoute(handler);
@@ -173,229 +119,63 @@ describe("ObserveRegisteredRoutes", () => {
     return id;
   }
 
-  function observe(observer: RegisteredRoutesObserver): () => void {
-    const unsubscribe = ObserveRegisteredRoutes(observer);
-    subscriptions.push(unsubscribe);
-    return unsubscribe;
-  }
-
   afterEach(() => {
-    for (const unsubscribe of subscriptions.splice(0)) {
-      unsubscribe();
-    }
     for (const id of routeIds.splice(0)) {
       UnregisterRoute(id);
     }
   });
 
-  it("synchronously replays complete registered handlers", () => {
-    const original = completeHandlerAt("/observer/replay");
+  it("returns complete registered handlers without replacing the provider", () => {
+    const original = completeHandlerAt("/handlers/complete");
     const id = register(original);
-    const observer = new RecordingRoutesObserver();
 
-    observe(observer);
-
-    const event = observer.registered.find(
+    const registered = getRegisteredRouteHandlers().find(
       (registered) => registered.id === id.toString(),
     );
-    assert(event);
-    assert.equal(event.handler.mode, original.mode);
-    assert.strictEqual(event.handler.callback, original.callback);
-    assert.strictEqual(event.handler.proto, original.proto);
-    assert.strictEqual(event.handler.parameters, original.parameters);
-    assert.strictEqual(event.handler.properties, original.properties);
-    assert.equal(event.handler.priority, original.priority);
-    assert(Object.hasOwn(event.handler, "module"));
-    assert.equal(typeof event.handler.module, "string");
-  });
-
-  it("emits live registrations without replacing the route provider", () => {
-    const observer = new RecordingRoutesObserver();
-    observe(observer);
-    observer.clear();
-    const original = completeHandlerAt("/observer/live");
-
-    const id = register(original);
-
-    assert.equal(observer.registered.length, 1);
-    assert.equal(observer.registered[0].id, id.toString());
+    assert(registered);
+    assert.equal(registered.handler.mode, original.mode);
+    assert.strictEqual(registered.handler.callback, original.callback);
+    assert.strictEqual(registered.handler.proto, original.proto);
+    assert.strictEqual(registered.handler.parameters, original.parameters);
+    assert.strictEqual(registered.handler.properties, original.properties);
+    assert.equal(registered.handler.priority, original.priority);
+    assert(Object.hasOwn(registered.handler, "module"));
+    assert.equal(typeof registered.handler.module, "string");
     const providerCall = proxyCalls.at(-1);
     assert.equal(providerCall?.kind, "register");
     assert.equal(providerCall?.id, id.toString());
-    assert.strictEqual(providerCall?.handler, observer.registered[0].handler);
+    assert.strictEqual(providerCall?.handler, registered.handler);
     assert.equal(Object.hasOwn(original, "module"), false);
   });
 
-  it("emits explicit route removals", () => {
-    const observer = new RecordingRoutesObserver();
-    observe(observer);
-    observer.clear();
-    const id = register(handlerAt("/observer/unregister"));
-    observer.clear();
+  it("excludes explicitly unregistered routes", () => {
+    const id = register(handlerAt("/handlers/unregister"));
 
     UnregisterRoute(id);
 
-    assert.deepEqual(observer.unregistered, [id.toString()]);
+    assert.equal(
+      getRegisteredRouteHandlers().some(
+        (registered) => registered.id === id.toString(),
+      ),
+      false,
+    );
   });
 
-  it("emits removals caused by module unload", () => {
-    const observer = new RecordingRoutesObserver();
-    observe(observer);
-    observer.clear();
-    const id = register(handlerAt("/observer/module-unload"));
-    const module = observer.registered[0].handler.module;
+  it("excludes routes removed during module unload", () => {
+    const id = register(handlerAt("/handlers/module-unload"));
+    const registered = getRegisteredRouteHandlers().find(
+      (entry) => entry.id === id.toString(),
+    );
+    assert(registered);
+    const module = registered.handler.module;
     assert(module);
-    observer.clear();
 
     routesProxy.unregisterModule(module);
 
-    assert.deepEqual(observer.unregistered, [id.toString()]);
-    assert.equal(routesAt("/observer/module-unload"), 0);
-  });
-
-  it("multicasts registrations and removals", () => {
-    const first = new RecordingRoutesObserver();
-    const second = new RecordingRoutesObserver();
-    observe(first);
-    observe(second);
-    first.clear();
-    second.clear();
-
-    const id = register(handlerAt("/observer/multicast"));
-    UnregisterRoute(id);
-
-    assert.deepEqual(
-      [first, second].map((observer) => observer.registered[0].id),
-      [id.toString(), id.toString()],
-    );
-    assert.deepEqual(
-      [first, second].map((observer) => observer.unregistered[0]),
-      [id.toString(), id.toString()],
-    );
-  });
-
-  it("does not duplicate live events for observers added during emission", () => {
-    const location = "/observer/reentrant-subscription";
-    const second = new RecordingRoutesObserver();
-    const first = new CallbackRoutesObserver((_id, handler) => {
-      if (handler.location === location) {
-        observe(second);
-      }
-    });
-    observe(first);
-
-    const id = register(handlerAt(location));
-
     assert.equal(
-      second.registered.filter((event) => event.id === id.toString()).length,
-      1,
-    );
-  });
-
-  it("does not notify observers removed during emission", () => {
-    const location = "/observer/reentrant-unsubscribe";
-    let unsubscribeSecond = () => {};
-    const first = new CallbackRoutesObserver((_id, handler) => {
-      if (handler.location === location) {
-        unsubscribeSecond();
-      }
-    });
-    const second = new RecordingRoutesObserver();
-    observe(first);
-    unsubscribeSecond = observe(second);
-    first.clear();
-    second.clear();
-
-    register(handlerAt(location));
-
-    assert.deepEqual(second.registered, []);
-  });
-
-  it("does not emit stale registrations after reentrant removal", () => {
-    const location = "/observer/reentrant-removal";
-    const first = new CallbackRoutesObserver((id, handler) => {
-      if (handler.location === location) {
-        UnregisterRoute(Number(id));
-      }
-    });
-    const second = new RecordingRoutesObserver();
-    observe(first);
-    observe(second);
-    first.clear();
-    second.clear();
-
-    const id = register(handlerAt(location));
-
-    assert.equal(
-      second.registered.some((event) => event.id === id.toString()),
+      getRegisteredRouteHandlers().some((entry) => entry.id === id.toString()),
       false,
     );
-    assert(second.unregistered.includes(id.toString()));
-  });
-
-  it("skips routes removed during synchronous replay", () => {
-    const triggerLocation = "/observer/replay-trigger";
-    register(handlerAt(triggerLocation));
-    const removedId = register(handlerAt("/observer/replay-removed"));
-    const observer = new CallbackRoutesObserver((_id, handler) => {
-      if (handler.location === triggerLocation) {
-        UnregisterRoute(removedId);
-      }
-    });
-
-    observe(observer);
-
-    assert.equal(
-      observer.registered.some((event) => event.id === removedId.toString()),
-      false,
-    );
-    assert(observer.unregistered.includes(removedId.toString()));
-  });
-
-  it("returns an idempotent unsubscribe function", () => {
-    const observer = new RecordingRoutesObserver();
-    const unsubscribe = observe(observer);
-    observer.clear();
-
-    unsubscribe();
-    unsubscribe();
-    register(handlerAt("/observer/unsubscribed"));
-
-    assert.deepEqual(observer.registered, []);
-    assert.deepEqual(observer.unregistered, []);
-  });
-
-  it("shares one subscription for repeated observer objects", () => {
-    const observer = new RecordingRoutesObserver();
-    const firstUnsubscribe = observe(observer);
-    const secondUnsubscribe = observe(observer);
-    observer.clear();
-
-    firstUnsubscribe();
-    register(handlerAt("/observer/repeated-subscription"));
-    secondUnsubscribe();
-
-    assert.deepEqual(observer.registered, []);
-    assert.deepEqual(observer.unregistered, []);
-  });
-
-  it("isolates throwing observers from routing and other observers", () => {
-    const throwing = new ThrowingRoutesObserver();
-    const recording = new RecordingRoutesObserver();
-    observe(throwing);
-    observe(recording);
-    recording.clear();
-    throwing.isThrowing = true;
-
-    let id = -1;
-    assert.doesNotThrow(() => {
-      id = register(handlerAt("/observer/throwing"));
-    });
-    assert.doesNotThrow(() => UnregisterRoute(id));
-
-    assert.equal(recording.registered[0].id, id.toString());
-    assert.deepEqual(recording.unregistered, [id.toString()]);
-    assert.equal(proxyCalls.at(-1)?.kind, "unregister");
-    assert.equal(proxyCalls.at(-1)?.id, id.toString());
+    assert.equal(routesAt("/handlers/module-unload"), 0);
   });
 });

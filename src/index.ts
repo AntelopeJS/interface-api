@@ -693,30 +693,12 @@ export interface RouteHandler {
 }
 
 /**
- * Observer for complete registered route handlers and their removal.
+ * Complete registered route handler and its identifier.
  */
-export interface RegisteredRoutesObserver {
-  /**
-   * Receives a route registration.
-   *
-   * @param id Route identifier.
-   * @param handler Complete registered route handler.
-   */
-  onRegister(id: string, handler: RouteHandler): void;
-
-  /**
-   * Receives a route removal.
-   *
-   * @param id Route identifier.
-   */
-  onUnregister(id: string): void;
+export interface RegisteredRouteHandler {
+  id: string;
+  handler: RouteHandler;
 }
-
-type RegisteredRoutesNotification = (
-  observer: RegisteredRoutesObserver,
-) => void;
-
-const REGISTERED_ROUTES_OBSERVER_ERROR = "Registered routes observer failed";
 
 /**
  * Registered route handlers indexed by their proxy id, mirroring the entries
@@ -724,88 +706,14 @@ const REGISTERED_ROUTES_OBSERVER_ERROR = "Registered routes observer failed";
  * do not accumulate across module reloads.
  */
 const routesList = new Map<string, RouteHandler>();
-const registeredRoutesObservers = new Map<RegisteredRoutesObserver, symbol>();
-
-function notifyRegisteredRoutesObserver(
-  observer: RegisteredRoutesObserver,
-  notification: RegisteredRoutesNotification,
-): void {
-  try {
-    notification(observer);
-  } catch (error) {
-    Logging.Error(REGISTERED_ROUTES_OBSERVER_ERROR, error);
-  }
-}
-
-function notifyRegisteredRoutesObservers(
-  notification: RegisteredRoutesNotification,
-): void {
-  for (const [observer, subscription] of Array.from(
-    registeredRoutesObservers,
-  )) {
-    if (registeredRoutesObservers.get(observer) !== subscription) {
-      continue;
-    }
-    notifyRegisteredRoutesObserver(observer, notification);
-  }
-}
-
-function notifyRouteRegistered(id: string, handler: RouteHandler): void {
-  notifyRegisteredRoutesObservers((observer) => {
-    if (routesList.get(id) === handler) {
-      observer.onRegister(id, handler);
-    }
-  });
-}
-
-function notifyRouteUnregistered(id: string): void {
-  notifyRegisteredRoutesObservers((observer) => observer.onUnregister(id));
-}
-
-function createRegisteredRoutesUnsubscribe(
-  observer: RegisteredRoutesObserver,
-  subscription: symbol,
-): () => void {
-  return () => {
-    if (registeredRoutesObservers.get(observer) === subscription) {
-      registeredRoutesObservers.delete(observer);
-    }
-  };
-}
 
 /**
- * Observes complete registered route handlers.
+ * Retrieves complete registered route handlers.
  *
- * Routes that already exist are replayed synchronously before this function
- * returns. Later registrations and removals are multicast to every subscribed
- * observer. Observer errors are logged without interrupting replay, other
- * observers, or route lifecycle operations. Repeated calls with the same
- * observer share one active subscription.
- *
- * @param observer Route lifecycle observer.
- * @returns An idempotent function that stops future notifications.
+ * @returns Snapshot of the current route registry.
  */
-export function ObserveRegisteredRoutes(
-  observer: RegisteredRoutesObserver,
-): () => void {
-  const existingSubscription = registeredRoutesObservers.get(observer);
-  if (existingSubscription) {
-    return createRegisteredRoutesUnsubscribe(observer, existingSubscription);
-  }
-  const subscription = Symbol();
-  registeredRoutesObservers.set(observer, subscription);
-  for (const [id, handler] of Array.from(routesList)) {
-    if (registeredRoutesObservers.get(observer) !== subscription) {
-      break;
-    }
-    if (routesList.get(id) !== handler) {
-      continue;
-    }
-    notifyRegisteredRoutesObserver(observer, (current) =>
-      current.onRegister(id, handler),
-    );
-  }
-  return createRegisteredRoutesUnsubscribe(observer, subscription);
+export function getRegisteredRouteHandlers(): RegisteredRouteHandler[] {
+  return Array.from(routesList, ([id, handler]) => ({ id, handler }));
 }
 
 /**
@@ -818,25 +726,17 @@ class RoutesProxy extends RegisteringProxy<
   (id: string, handler: RouteHandler) => void
 > {
   override unregister(id: string) {
-    const wasRegistered = routesList.delete(id);
+    routesList.delete(id);
     super.unregister(id);
-    if (wasRegistered) {
-      notifyRouteUnregistered(id);
-    }
   }
 
   override unregisterModule(mod: string) {
-    const removedIds: string[] = [];
     for (const [id, handler] of routesList) {
       if (handler.module === mod) {
         routesList.delete(id);
-        removedIds.push(id);
       }
     }
     super.unregisterModule(mod);
-    for (const id of removedIds) {
-      notifyRouteUnregistered(id);
-    }
   }
 }
 
@@ -866,7 +766,6 @@ export function RegisterRoute(handler: RouteHandler) {
   );
   routesProxy.register(id.toString(), enriched);
   routesList.set(id.toString(), enriched);
-  notifyRouteRegistered(id.toString(), enriched);
   return id;
 }
 
