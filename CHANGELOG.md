@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.13
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.12...v0.0.13)
+
+### 🚀 Enhancements
+
+- **routes:** Expose complete registered route handlers ([#16](https://github.com/AntelopeJS/interface-api/pull/16))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli <upd4ting@gmail.com>
+
 ## v0.0.12
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.11...v0.0.12)
