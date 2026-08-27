@@ -693,11 +693,28 @@ export interface RouteHandler {
 }
 
 /**
+ * Complete registered route handler and its identifier.
+ */
+export interface RegisteredRouteHandler {
+  id: string;
+  handler: RouteHandler;
+}
+
+/**
  * Registered route handlers indexed by their proxy id, mirroring the entries
  * held by {@link routesProxy}. Pruned by {@link RoutesProxy} so stale handlers
  * do not accumulate across module reloads.
  */
 const routesList = new Map<string, RouteHandler>();
+
+/**
+ * Retrieves complete registered route handlers.
+ *
+ * @returns Snapshot of the current route registry.
+ */
+export function getRegisteredRouteHandlers(): RegisteredRouteHandler[] {
+  return Array.from(routesList, ([id, handler]) => ({ id, handler }));
+}
 
 /**
  * RegisteringProxy that also prunes {@link routesList} on the same lifecycle
