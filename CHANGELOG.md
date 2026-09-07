@@ -1,6 +1,5 @@
 # Changelog
 
-
 ## v0.0.13
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.12...v0.0.13)
@@ -145,7 +144,6 @@
 
 ## v0.0.2
 
-
 ### 🚀 Enhancements
 
 - Add API interface implementation ([981bb27](https://github.com/AntelopeJS/interface-api/commit/981bb27))
@@ -172,4 +170,3 @@
 - Antony Rizzitelli <upd4ting@gmail.com>
 - Glastis ([@Glastis](http://github.com/Glastis))
 - Fabrice Cst <fabrice@altab.be>
-

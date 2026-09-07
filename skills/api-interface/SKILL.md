@@ -20,18 +20,47 @@ Everything is exported from the package root (no subpaths):
 
 ```ts
 import {
-  Controller, PartialController, Get, Post, Put, Delete, Route,
-  Prefix, Postfix, Monitor, WebsocketHandler, HandlerPriority,
-  Parameter, MultiParameter, JSONBody, RawBody, Context, Result,
-  WriteStream, Connection, Transform, HTTPResult, RequestContext,
-  Listen, GetControllerInstance, GetCorsConfig, SetCorsConfig,
+  Controller,
+  PartialController,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Route,
+  Prefix,
+  Postfix,
+  Monitor,
+  WebsocketHandler,
+  HandlerPriority,
+  Parameter,
+  MultiParameter,
+  JSONBody,
+  RawBody,
+  Context,
+  Result,
+  WriteStream,
+  Connection,
+  Transform,
+  HTTPResult,
+  RequestContext,
+  Listen,
+  GetControllerInstance,
+  GetCorsConfig,
+  SetCorsConfig,
 } from "@antelopejs/interface-api";
 ```
 
 ## Consuming: define a controller
 
 ```ts
-import { Controller, Get, Post, Parameter, JSONBody, HTTPResult } from "@antelopejs/interface-api";
+import {
+  Controller,
+  Get,
+  Post,
+  Parameter,
+  JSONBody,
+  HTTPResult,
+} from "@antelopejs/interface-api";
 
 export class BookController extends Controller("/books") {
   @Get(":id")
