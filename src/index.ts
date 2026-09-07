@@ -1,5 +1,6 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
 import { PassThrough } from "node:stream";
+import { Logging } from "@antelopejs/interface-core/logging";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import {
   GetMetadata,
   GetResponsibleModule,
@@ -12,7 +13,6 @@ import {
   MakeParameterAndPropertyDecorator,
   MakeParameterDecorator,
 } from "@antelopejs/interface-core/decorators";
-import { Logging } from "@antelopejs/interface-core/logging";
 
 /**
  * @internal
