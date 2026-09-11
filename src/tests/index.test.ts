@@ -1,6 +1,16 @@
+import WebSocket from "ws";
 import assert from "node:assert";
-import type { IncomingMessage, ServerResponse } from "node:http";
 import { PassThrough } from "node:stream";
+import sinon, { type SinonSpy } from "sinon";
+import { Logging } from "@antelopejs/interface-core/logging";
+import type { IncomingMessage, ServerResponse } from "node:http";
+import logListener, {
+  type Log,
+} from "@antelopejs/interface-core/logging/listener";
+import {
+  MakeMethodDecorator,
+  MakeParameterAndPropertyDecorator,
+} from "@antelopejs/interface-core/decorators";
 import {
   Connection,
   Context,
@@ -27,16 +37,7 @@ import {
   WebsocketHandler,
   WriteStream,
 } from "@antelopejs/interface-api";
-import {
-  MakeMethodDecorator,
-  MakeParameterAndPropertyDecorator,
-} from "@antelopejs/interface-core/decorators";
-import { Logging } from "@antelopejs/interface-core/logging";
-import logListener, {
-  type Log,
-} from "@antelopejs/interface-core/logging/listener";
-import sinon, { type SinonSpy } from "sinon";
-import WebSocket from "ws";
+
 import {
   DEFAULT_REQUEST_BODY_LIMIT,
   HTTPResult as LocalHTTPResult,
