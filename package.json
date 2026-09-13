@@ -21,10 +21,21 @@
   ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "registered-read": [
+        "dist/registered-read.d.ts"
+      ]
+    }
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./registered-read": {
+      "types": "./dist/registered-read.d.ts",
+      "default": "./dist/registered-read.js"
     },
     "./package.json": "./package.json"
   },
