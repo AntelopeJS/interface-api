@@ -1,5 +1,3 @@
-![API](.github/social-card.png)
-
 # Interface API
 
 <div align="center">
