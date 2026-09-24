@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.0.14
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.13...v0.0.14)
+
+### 📖 Documentation
+
+- **readme:** Remove social card image ([#23](https://github.com/AntelopeJS/interface-api/pull/23))
+
+### 🏡 Chore
+
+- Replace Biome with oxlint, oxfmt and Knip ([#19](https://github.com/AntelopeJS/interface-api/pull/19))
+- Align community files with the organization defaults ([#22](https://github.com/AntelopeJS/interface-api/pull/22))
+- Remove .git-blame-ignore-revs ([#24](https://github.com/AntelopeJS/interface-api/pull/24))
+
+### ✅ Tests
+
+- **routes:** Assert registered handlers by behavior, not reference identity ([#28](https://github.com/AntelopeJS/interface-api/pull/28))
+
+### 🤖 CI
+
+- Standardize npm releases ([#18](https://github.com/AntelopeJS/interface-api/pull/18))
+- Use shared npm release workflow ([#21](https://github.com/AntelopeJS/interface-api/pull/21))
+- **release:** Release next from a dedicated branch and restore requireCommits ([#25](https://github.com/AntelopeJS/interface-api/pull/25))
+- **release:** Reference the shared release workflows through v1 ([#26](https://github.com/AntelopeJS/interface-api/pull/26))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli <rizzitelli.antony@pm.me>
+- Thomas ([@Thomasims](http://github.com/Thomasims))
+
 ## v0.0.13
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.12...v0.0.13)
