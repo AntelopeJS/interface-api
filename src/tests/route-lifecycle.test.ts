@@ -6,6 +6,7 @@ import {
   getRegisteredRoutes,
   HandlerPriority,
   RegisterRoute,
+  type RequestContext,
   type RouteHandler,
   routesProxy,
   UnregisterRoute,
@@ -50,6 +51,20 @@ function completeHandlerAt(location: string): RouteHandler {
   };
 }
 
+function providedValueOf(parameter: ComputedParameter | null | undefined) {
+  return parameter?.provider?.({} as RequestContext);
+}
+
+function stableFieldsOf(handler: RouteHandler | undefined) {
+  return {
+    location: handler?.location,
+    method: handler?.method,
+    mode: handler?.mode,
+    module: handler?.module,
+    priority: handler?.priority,
+  };
+}
+
 function routesAt(location: string): number {
   return getRegisteredRoutes().filter((route) => route.location === location)
     .length;
@@ -59,7 +74,10 @@ describe("Route lifecycle", () => {
   // These run against the local build, whose proxy no module attaches in the
   // test harness (the api module binds the harness-distributed copy). A
   // recording provider both keeps the stub-mode proxy from throwing and lets
-  // the cases assert what reaches the real registry.
+  // the cases assert what reaches the real registry. They also ship with the
+  // interface and run from implementation modules, where the core resolver
+  // hands out facades for every passed value: assertions check behavior and
+  // structure, never reference identity.
   before(() => {
     routesProxy.onRegister((id: string, handler: RouteHandler) => {
       proxyCalls.push({ kind: "register", id, handler });
@@ -134,18 +152,29 @@ describe("getRegisteredRouteHandlers", () => {
       (registered) => registered.id === id.toString(),
     );
     assert(registered);
-    assert.equal(registered.handler.mode, original.mode);
-    assert.strictEqual(registered.handler.callback, original.callback);
-    assert.strictEqual(registered.handler.proto, original.proto);
-    assert.strictEqual(registered.handler.parameters, original.parameters);
-    assert.strictEqual(registered.handler.properties, original.properties);
-    assert.equal(registered.handler.priority, original.priority);
-    assert(Object.hasOwn(registered.handler, "module"));
-    assert.equal(typeof registered.handler.module, "string");
+    const { handler } = registered;
+    assert.equal(handler.location, original.location);
+    assert.equal(handler.method, original.method);
+    assert.equal(handler.mode, original.mode);
+    assert.equal(handler.priority, original.priority);
+    assert.equal(handler.callback(), original.location);
+    assert.deepEqual(handler.proto, original.proto);
+    assert.equal(handler.parameters.length, 2);
+    assert.equal(handler.parameters[1], null);
+    assert.equal(providedValueOf(handler.parameters[0]), "parameter");
+    assert.equal(handler.parameters[0]?.modifiers.length, 0);
+    assert.deepEqual(Object.keys(handler.properties), ["property"]);
+    assert.equal(providedValueOf(handler.properties.property), "parameter");
+    assert.equal(handler.properties.property?.modifiers.length, 0);
+    assert(Object.hasOwn(handler, "module"));
+    assert.equal(typeof handler.module, "string");
     const providerCall = proxyCalls.at(-1);
     assert.equal(providerCall?.kind, "register");
     assert.equal(providerCall?.id, id.toString());
-    assert.strictEqual(providerCall?.handler, registered.handler);
+    assert.deepEqual(
+      stableFieldsOf(providerCall?.handler),
+      stableFieldsOf(handler),
+    );
     assert.equal(Object.hasOwn(original, "module"), false);
   });
 
