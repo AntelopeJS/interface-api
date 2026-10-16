@@ -1,29 +1,93 @@
-# Interface API
+# @antelopejs/interface-api
 
 <div align="center">
-<a href="https://www.npmjs.com/package/@antelopejs/interface-api"><img src="https://img.shields.io/npm/v/@antelopejs/interface-api?style=for-the-badge&labelColor=000000&color=000000" alt="npm"></a>
-<a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge&labelColor=000000"></a>
-<a href="https://discord.gg/sjK28QHrA7"><img src="https://img.shields.io/badge/Discord-18181B?logo=discord&style=for-the-badge&color=000000" alt="Discord"></a>
-<a href="./docs/1.introduction.md"><img src="https://img.shields.io/badge/Docs-18181B?style=for-the-badge&color=000000" alt="Documentation"></a>
+<a href="https://www.npmjs.com/package/@antelopejs/interface-api"><img alt="npm" src="https://img.shields.io/npm/v/@antelopejs/interface-api?style=for-the-badge&labelColor=000000&color=000000"></a>
+<a href="./LICENSE"><img alt="License" src="https://img.shields.io/npm/l/@antelopejs/interface-api?style=for-the-badge&labelColor=000000&color=000000"></a>
+<a href="https://discord.gg/sjK28QHrA7"><img alt="Discord" src="https://img.shields.io/badge/Discord-18181B?logo=discord&style=for-the-badge&color=000000"></a>
+<a href="https://interfaces.antelopejs.com/docs/api"><img alt="Docs" src="https://img.shields.io/badge/Docs-18181B?style=for-the-badge&color=000000"></a>
 </div>
 
-A decorator-based framework for building HTTP services with TypeScript. Interface API provides a clean, declarative syntax for defining routes, handling requests, managing responses, and supporting WebSocket connections.
+The AntelopeJS contract for HTTP and WebSocket APIs: declare controllers and routes with decorators, and let the module that implements the interface serve them.
 
-## Installation
+## What it offers
+
+- `Controller` and `PartialController` group routes under a base path, with nesting through `extend`.
+- `@Get`, `@Post`, `@Put`, `@Delete` and `@Route` map methods to endpoints; `@Prefix`, `@Postfix` and `@Monitor` run around them.
+- `@Parameter`, `@JSONBody`, `@RawBody`, `@Context` and `@WriteStream` inject request data into handler arguments.
+- `HTTPResult` sets the status, headers and body of a response.
+- `@WebsocketHandler` and `@Connection` handle WebSocket connections on the same controllers.
+
+## Implementations
+
+| Module                                                 | Notes                                    |
+| ------------------------------------------------------ | ---------------------------------------- |
+| [`@antelopejs/api`](https://github.com/AntelopeJS/api) | HTTP and WebSocket server, CORS settings |
+
+## Install
+
+Add the interface to the module that declares routes:
 
 ```bash
-npm install @antelopejs/interface-api
+pnpm add @antelopejs/interface-api
 ```
+
+Then add an implementation to the project:
+
+```bash
+ajs project modules add @antelopejs/api
+```
+
+## Quick start
+
+```ts
+import {
+  Controller,
+  Get,
+  HTTPResult,
+  JSONBody,
+  Parameter,
+  Post,
+} from "@antelopejs/interface-api";
+
+export class BookController extends Controller("/books") {
+  @Get(":id")
+  async getBook(@Parameter("id") id: string) {
+    return new HTTPResult(200, { id });
+  }
+
+  @Post("")
+  async createBook(@JSONBody() body: { title: string }) {
+    return new HTTPResult(201, body);
+  }
+}
+```
+
+The decorators register the routes when the class is defined. `@antelopejs/api` serves `GET /books/:id` and `POST /books`.
 
 ## Documentation
 
-Detailed documentation is available in the `docs` directory:
+- [Introduction](https://interfaces.antelopejs.com/docs/api/introduction)
+- [Controllers](https://interfaces.antelopejs.com/docs/api/controllers)
+- [HTTP handling](https://interfaces.antelopejs.com/docs/api/http-handling)
+- [Parameters](https://interfaces.antelopejs.com/docs/api/parameters)
 
-- [Introduction](./docs/1.introduction.md) - Overview and core concepts
-- [Controllers](./docs/2.controllers.md) - Creating and organizing API controllers
-- [HTTP Handling](./docs/3.http-handling.md) - Request and response handling
-- [Parameter Handling](./docs/4.parameters.md) - Parameter injection and transformation
+## Compatibility
+
+| Package                             | Range            |
+| ----------------------------------- | ---------------- |
+| `@antelopejs/interface-core` (peer) | `>=0.1.1 <1.0.0` |
+| `@antelopejs/core`                  | `1.x`            |
+
+## Contributing
+
+Read [CONTRIBUTING.md](./CONTRIBUTING.md) before you open a pull request. The local checks are:
+
+```bash
+pnpm install
+pnpm lint
+pnpm test
+```
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+[Apache-2.0](./LICENSE)
