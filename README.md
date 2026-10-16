@@ -66,17 +66,20 @@ The decorators register the routes when the class is defined. `@antelopejs/api` 
 
 ## Documentation
 
-- [Introduction](https://interfaces.antelopejs.com/docs/api/introduction)
-- [Controllers](https://interfaces.antelopejs.com/docs/api/controllers)
-- [HTTP handling](https://interfaces.antelopejs.com/docs/api/http-handling)
-- [Parameters](https://interfaces.antelopejs.com/docs/api/parameters)
+- [Introduction](./docs/1.introduction.md)
+- [Controllers and route registration](./docs/2.controllers.md)
+- [HTTP handling and CORS](./docs/3.http-handling.md)
+- [Parameters](./docs/4.parameters.md)
 
 ## Compatibility
 
-| Package                             | Range            |
-| ----------------------------------- | ---------------- |
-| `@antelopejs/interface-core` (peer) | `>=0.1.1 <1.0.0` |
-| `@antelopejs/core`                  | `1.x`            |
+Use with `@antelopejs/core` 1.x and the following peer dependency:
+
+<!-- docs-compat: ./package.json#peerDependencies -->
+
+| Package                      | Range            |
+| ---------------------------- | ---------------- |
+| `@antelopejs/interface-core` | `>=0.1.1 <1.0.0` |
 
 ## Contributing
 
