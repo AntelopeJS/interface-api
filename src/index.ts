@@ -710,7 +710,8 @@ const routesList = new Map<string, RouteHandler>();
 /**
  * Retrieves complete registered route handlers.
  *
- * @returns Snapshot of the current route registry.
+ * @returns A new array for this interface instance, with string IDs and shared
+ * handler references. Treat the handlers as read-only; this is not a deep copy.
  */
 export function getRegisteredRouteHandlers(): RegisteredRouteHandler[] {
   return Array.from(routesList, ([id, handler]) => ({ id, handler }));
@@ -787,7 +788,9 @@ export function UnregisterRoute(id: number): void {
 
 /**
  * Retrieves all registered routes with detailed information.
- * @returns {Array<Object>} An array of route information objects.
+ *
+ * @returns A new summary array for this interface instance. IDs are strings;
+ * parameters and properties reference the registered metadata, not copies.
  */
 export function getRegisteredRoutes(): Array<{
   id: string;
