@@ -1,14 +1,20 @@
 {
   "name": "@antelopejs/interface-api",
   "version": "0.0.14",
-  "description": "AntelopeJS interface for HTTP API with decorator-based controllers and WebSocket support",
+  "description": "AntelopeJS interface for HTTP and WebSocket APIs: decorator-based controllers, routes and parameter injection",
   "keywords": [
     "antelopejs",
     "api",
+    "decorators",
     "http",
     "interface",
+    "rest",
     "websocket"
   ],
+  "homepage": "https://interfaces.antelopejs.com/docs/api",
+  "bugs": {
+    "url": "https://github.com/AntelopeJS/interface-api/issues"
+  },
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
