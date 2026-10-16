@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.0.15
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.14...v0.0.15)
+
+### 📖 Documentation
+
+- Rewrite the README ([#32](https://github.com/AntelopeJS/interface-api/pull/32))
+- **agents:** Simplify repository guidance ([#33](https://github.com/AntelopeJS/interface-api/pull/33))
+- Cover route lifecycle, introspection and CORS contracts ([#34](https://github.com/AntelopeJS/interface-api/pull/34))
+
+### 🤖 CI
+
+- Use the repo-local antelope core instead of a global install ([#29](https://github.com/AntelopeJS/interface-api/pull/29))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli <rizzitelli.antony@pm.me>
+
 ## v0.0.14
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.13...v0.0.14)
