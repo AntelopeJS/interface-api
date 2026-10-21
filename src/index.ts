@@ -1370,6 +1370,51 @@ export const JSONBody = MakeParameterAndPropertyDecorator(
 );
 
 /**
+ * Get the body from a RequestContext object as a stream of chunks, read as
+ * the handler iterates and never buffered whole: no size limit applies, the
+ * handler bounds what it accepts. Stopping early (a `break`, or a throw from
+ * the loop) discards the rest of the body, so the client still receives the
+ * response.
+ *
+ * Read a body once: through this stream, or through {@link ReadBody}.
+ *
+ * @param context Request context
+ * @returns Body chunks
+ */
+export async function* StreamBody(
+  context: RequestContext,
+): AsyncGenerator<Uint8Array, void, undefined> {
+  const request = context.rawRequest;
+  try {
+    for await (const chunk of request.iterator({ destroyOnReturn: false }))
+      yield chunk as Uint8Array;
+  } finally {
+    request.resume();
+  }
+}
+
+/**
+ * Parameter Provider: Streamed Request Body.
+ *
+ * Provides the HTTP request body as an `AsyncIterable<Uint8Array>`, read as
+ * the handler iterates it (see {@link StreamBody}). Use it for uploads larger
+ * than {@link RawBody} should buffer: the handler enforces its own limit.
+ *
+ * Example:
+ * ```ts
+ * @Put("/upload")
+ * async upload(@BodyStream() body: AsyncIterable<Uint8Array>) {
+ *   await pipeline(Readable.from(body), createWriteStream(target));
+ *   return new HTTPResult(200, { success: true });
+ * }
+ * ```
+ */
+export const BodyStream = MakeParameterAndPropertyDecorator(
+  (target, key, param) =>
+    SetParameterProvider(target, key, param, (context) => StreamBody(context)),
+);
+
+/**
  * Parameter Provider: Request Parameter.
  *
  * Extracts a single parameter value from the request. This can be from:
