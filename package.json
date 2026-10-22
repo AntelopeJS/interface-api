@@ -1,6 +1,6 @@
 {
   "name": "@antelopejs/interface-api",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "AntelopeJS interface for HTTP and WebSocket APIs: decorator-based controllers, routes and parameter injection",
   "keywords": [
     "antelopejs",

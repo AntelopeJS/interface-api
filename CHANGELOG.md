@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.0.16
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.15...v0.0.16)
+
+### 🚀 Enhancements
+
+- Stream a request body with @BodyStream / StreamBody ([#38](https://github.com/AntelopeJS/interface-api/pull/38))
+
+### 📖 Documentation
+
+- Improve task-based onboarding and contract guidance ([#35](https://github.com/AntelopeJS/interface-api/pull/35))
+- Clarify learning paths and illustrate real outcomes ([#37](https://github.com/AntelopeJS/interface-api/pull/37))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli <rizzitelli.antony@pm.me>
+
 ## v0.0.15
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.14...v0.0.15)
