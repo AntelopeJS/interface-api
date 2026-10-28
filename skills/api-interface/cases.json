@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "streaming-response",
+      "area": "framework",
+      "style": "clean",
+      "prompt": "How do I return a streaming response?",
+      "origin": "docs-assistant",
+      "expect": {
+        "skills": ["api-interface"],
+        "acceptable": ["antelopejs"],
+        "mustMention": ["WriteStream"]
+      }
+    },
+    {
+      "id": "streaming-response-casual",
+      "area": "framework",
+      "style": "casual",
+      "prompt": "sending data continuously, how does that work",
+      "origin": "docs-assistant",
+      "expect": {
+        "skills": ["api-interface"],
+        "acceptable": ["antelopejs"],
+        "mustMention": ["WriteStream"]
+      }
+    },
+    {
+      "id": "api-interface-auth-neighbour",
+      "area": "framework",
+      "style": "clean",
+      "prompt": "How do I generate a signed token with an expiry and later check that it is still valid?",
+      "expect": {
+        "skills": ["auth-interface"],
+        "acceptable": ["antelopejs", "ajs-consume-interface"],
+        "avoid": ["api-interface"]
+      }
+    },
+    {
+      "id": "api-interface-prefix-handler",
+      "area": "framework",
+      "style": "clean",
+      "prompt": "I want request middleware in my controller that runs before every route and stops the request when it fails. How do I do that?",
+      "expect": {
+        "skills": ["api-interface"],
+        "acceptable": ["antelopejs", "ajs-consume-interface", "auth-interface"],
+        "mustMention": ["Prefix"]
+      }
+    },
+    {
+      "id": "api-interface-websocket-casual",
+      "area": "framework",
+      "style": "casual",
+      "prompt": "need a websocket handler for live chat in my module, how do i set it up",
+      "expect": {
+        "skills": ["api-interface"],
+        "acceptable": ["antelopejs", "ajs-consume-interface"],
+        "mustMention": ["WebsocketHandler", "Connection"]
+      }
+    }
+  ]
+}
