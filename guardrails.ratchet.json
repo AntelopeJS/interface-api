@@ -1,20 +1,11 @@
 {
   "rules": {
-    "antelopejs/no-comments": 34,
-    "antelopejs/require-assertion": 2,
-    "anti-slop/no-chained-type-assertions": 6,
-    "anti-slop/no-runtime-typeof": 4,
-    "anti-slop/no-unknown-parameters": 4,
+    "anti-slop/no-runtime-typeof": 2,
+    "anti-slop/no-unknown-parameters": 3,
     "anti-slop/no-unknown-returns": 2,
     "anti-slop/no-unsafe-dictionary-type": 1,
-    "anti-slop/require-safety-comment-for-type-assertion": 72,
-    "eslint/max-lines-per-function": 4,
-    "eslint/max-params": 4,
-    "typescript/restrict-template-expressions": 1,
-    "typescript/unbound-method": 21
+    "anti-slop/require-safety-comment-for-type-assertion": 2,
+    "eslint/max-params": 1
   },
-  "oversizeFiles": {
-    "src/index.ts": 43261,
-    "src/tests/index.test.ts": 40774
-  }
+  "oversizeFiles": {}
 }

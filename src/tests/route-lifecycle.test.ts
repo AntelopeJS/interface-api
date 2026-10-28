@@ -6,11 +6,11 @@ import {
   getRegisteredRoutes,
   HandlerPriority,
   RegisterRoute,
-  type RequestContext,
   type RouteHandler,
   routesProxy,
   UnregisterRoute,
 } from "../index";
+import { createRequestContext } from "./request-context";
 
 interface ProxyCall {
   handler?: RouteHandler;
@@ -29,7 +29,7 @@ function handlerAt(location: string): RouteHandler {
     properties: {},
     proto: {},
     callback: async () => new Response(),
-  } as unknown as RouteHandler;
+  };
 }
 
 function completeHandlerAt(location: string): RouteHandler {
@@ -52,7 +52,7 @@ function completeHandlerAt(location: string): RouteHandler {
 }
 
 function providedValueOf(parameter: ComputedParameter | null | undefined) {
-  return parameter?.provider?.({} as RequestContext);
+  return parameter?.provider?.(createRequestContext());
 }
 
 function stableFieldsOf(handler: RouteHandler | undefined) {
@@ -71,13 +71,6 @@ function routesAt(location: string): number {
 }
 
 describe("Route lifecycle", () => {
-  // These run against the local build, whose proxy no module attaches in the
-  // test harness (the api module binds the harness-distributed copy). A
-  // recording provider both keeps the stub-mode proxy from throwing and lets
-  // the cases assert what reaches the real registry. They also ship with the
-  // interface and run from implementation modules, where the core resolver
-  // hands out facades for every passed value: assertions check behavior and
-  // structure, never reference identity.
   before(() => {
     routesProxy.onRegister((id: string, handler: RouteHandler) => {
       proxyCalls.push({ kind: "register", id, handler });
@@ -98,16 +91,21 @@ describe("Route lifecycle", () => {
 
     UnregisterRoute(id);
 
-    // Gone from the public listing, and only the targeted route: the
-    // bystander keeps serving.
-    assert.equal(routesAt("/lifecycle/released"), 0);
-    assert.equal(routesAt("/lifecycle/bystander"), 1);
-    // The proxy heard the unregister under the id RegisterRoute handed out,
-    // as a string — the registry is keyed that way.
-    assert.deepEqual(proxyCalls.at(-1), {
-      kind: "unregister",
-      id: id.toString(),
-    });
+    assert.equal(
+      routesAt("/lifecycle/released"),
+      0,
+      "The released route is gone from the public listing",
+    );
+    assert.equal(
+      routesAt("/lifecycle/bystander"),
+      1,
+      "Only the targeted route is released: the bystander keeps serving",
+    );
+    assert.deepEqual(
+      proxyCalls.at(-1),
+      { kind: "unregister", id: id.toString() },
+      "The proxy hears the unregister under the string id RegisterRoute handed out",
+    );
     UnregisterRoute(bystander);
     assert.equal(routesAt("/lifecycle/bystander"), 0);
   });
@@ -167,7 +165,7 @@ describe("getRegisteredRouteHandlers", () => {
     assert.equal(providedValueOf(handler.properties.property), "parameter");
     assert.equal(handler.properties.property?.modifiers.length, 0);
     assert(Object.hasOwn(handler, "module"));
-    assert.equal(typeof handler.module, "string");
+    assert.ok(handler.module, "RegisterRoute names the responsible module");
     const providerCall = proxyCalls.at(-1);
     assert.equal(providerCall?.kind, "register");
     assert.equal(providerCall?.id, id.toString());

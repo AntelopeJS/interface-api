@@ -4,10 +4,16 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@antelopejs/api>@antelopejs/interface-api': link:.
+
 importers:
 
   .:
     devDependencies:
+      '@antelopejs/api':
+        specifier: 1.3.0
+        version: 1.3.0
       '@antelopejs/core':
         specifier: ^1.16.0
         version: 1.16.0
@@ -15,8 +21,8 @@ importers:
         specifier: '>=0.2.4 <1.0.0'
         version: 0.2.4
       '@antelopejs/tooling-configs':
-        specifier: ^0.2.0
-        version: 0.2.0(eslint-plugin-perfectionist@5.11.0(eslint@10.10.0(jiti@2.7.0))(typescript@5.9.3))(knip@6.34.0)(oxfmt@0.66.0)(oxlint@1.81.0(oxlint-tsgolint@7.0.2001))
+        specifier: ^0.2.8
+        version: 0.2.8(eslint-plugin-perfectionist@5.11.0(eslint@10.10.0(jiti@2.7.0))(typescript@5.9.3))(knip@6.34.0)(oxfmt@0.66.0)(oxlint@1.81.0(oxlint-tsgolint@7.0.2001))
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -68,16 +74,25 @@ importers:
 
 packages:
 
+  '@antelopejs/api@1.3.0':
+    resolution: {integrity: sha512-0JfRGvkkwjdQCOeoPTErMBR3zjJW3rzU/qrJLLTtMW1Ipj6PK/Gvj0w/wY4XBP5QucX8YoI+yhgwJk/UOportw==}
+
   '@antelopejs/core@1.16.0':
     resolution: {integrity: sha512-dj1R8xPgLzkTksfenPNh3kX1fffRnWktielk1yad/4/1wTEMhkPSx1WQ/4QI98d95L6Th0EMGTV/U4o84p/2yw==}
     engines: {node: '>=20.19'}
     hasBin: true
 
+  '@antelopejs/interface-api-util@0.1.3':
+    resolution: {integrity: sha512-nJ/WH8MOrsJpNFUSecgA3wRG1tcmHu40MhCY2hD3hllq0595WtUjeirRFr4/KPtj+mbjnQJAvPcxCeXuwwAx+g==}
+    peerDependencies:
+      '@antelopejs/interface-api': '>=0.0.15 <1.0.0'
+      '@antelopejs/interface-core': '>=0.2.4 <1.0.0'
+
   '@antelopejs/interface-core@0.2.4':
     resolution: {integrity: sha512-2qF6/KwahCQvvNuC/piUvPWD4wq2Npmco941HMg2/bMBoJKbhMH16WcXXRvPYznNSkU0U+6vqK6KE+2N5NojSA==}
 
-  '@antelopejs/tooling-configs@0.2.0':
-    resolution: {integrity: sha512-D3yCA9ZuvuDfzz8lS5VKyP8sgDkSdM0k1Awp3Q8qwq3u1/dc8UF4ep3SHW5fZpTQpLwNRcEDv1DSrRx+b7w9aA==}
+  '@antelopejs/tooling-configs@0.2.8':
+    resolution: {integrity: sha512-WSrWe/0R+J6SbJw0Rr6twK4/3VoVUWd7QIg99gdDTh86plSqVgSiX2cokcAJ1sDiPRQB2t+8drasv1pVx85DDw==}
     engines: {node: '>=22.18.0'}
     hasBin: true
     peerDependencies:
@@ -1246,6 +1261,11 @@ packages:
   dotenv@17.3.1:
     resolution: {integrity: sha512-IO8C/dzEb6O3F9/twg6ZLXz164a2fhTnEWb95H23Dm4OuN+92NmEAlTrupP9VW6Jm3sO26tQlqyvyi4CsnY9GA==}
     engines: {node: '>=12'}
+
+  dts-bundle-generator@9.5.1:
+    resolution: {integrity: sha512-DxpJOb2FNnEyOzMkG11sxO2dmxPjthoVWxfKqWYJ/bI/rT1rvTMktF5EKjAYrRZu6Z6t3NhOUZ0sZ5ZXevOfbA==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
 
   duplexify@3.7.1:
     resolution: {integrity: sha512-07z8uv2wMyS51kKhD1KsdXJg5WQ6t93RneqRxUHnskXVtlYYkLqM0gqStQZ3pj073g687jPCHrqNfCzawLYh5g==}
@@ -2533,6 +2553,17 @@ packages:
 
 snapshots:
 
+  '@antelopejs/api@1.3.0':
+    dependencies:
+      '@antelopejs/interface-api': 'link:'
+      '@antelopejs/interface-api-util': 0.1.3(@antelopejs/interface-api@)(@antelopejs/interface-core@0.2.4)
+      '@antelopejs/interface-core': 0.2.4
+      reflect-metadata: 0.2.2
+      ws: 8.20.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@antelopejs/core@1.16.0':
     dependencies:
       '@antelopejs/interface-core': 0.2.4
@@ -2548,13 +2579,20 @@ snapshots:
       semver: 7.7.4
       typescript: 5.9.3
 
+  '@antelopejs/interface-api-util@0.1.3(@antelopejs/interface-api@)(@antelopejs/interface-core@0.2.4)':
+    dependencies:
+      '@antelopejs/interface-api': 'link:'
+      '@antelopejs/interface-core': 0.2.4
+
   '@antelopejs/interface-core@0.2.4':
     dependencies:
       reflect-metadata: 0.2.2
 
-  '@antelopejs/tooling-configs@0.2.0(eslint-plugin-perfectionist@5.11.0(eslint@10.10.0(jiti@2.7.0))(typescript@5.9.3))(knip@6.34.0)(oxfmt@0.66.0)(oxlint@1.81.0(oxlint-tsgolint@7.0.2001))':
+  '@antelopejs/tooling-configs@0.2.8(eslint-plugin-perfectionist@5.11.0(eslint@10.10.0(jiti@2.7.0))(typescript@5.9.3))(knip@6.34.0)(oxfmt@0.66.0)(oxlint@1.81.0(oxlint-tsgolint@7.0.2001))':
     dependencies:
       '@oxlint/plugins': 1.81.0
+      dts-bundle-generator: 9.5.1
+      typescript: 5.9.3
       yaml: 2.9.1
     optionalDependencies:
       eslint-plugin-perfectionist: 5.11.0(eslint@10.10.0(jiti@2.7.0))(typescript@5.9.3)
@@ -3524,6 +3562,11 @@ snapshots:
   dotenv@16.6.1: {}
 
   dotenv@17.3.1: {}
+
+  dts-bundle-generator@9.5.1:
+    dependencies:
+      typescript: 5.9.3
+      yargs: 17.7.3
 
   duplexify@3.7.1:
     dependencies:
