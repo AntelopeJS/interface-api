@@ -2,6 +2,8 @@ import { PassThrough } from "node:stream";
 import type { ServerResponse } from "node:http";
 import { Logging } from "@antelopejs/interface-core/logging";
 
+import { isString } from "./guards";
+
 const SERVER_ERROR_BODY_LOG_LIMIT = 2048;
 
 /**
@@ -76,7 +78,7 @@ export class HTTPResult {
    * @param type Content type
    */
   public setBody(body: any, type?: string) {
-    if (body === undefined || typeof body === "string") {
+    if (body === undefined || isString(body)) {
       this.body = body || "";
       this.contentType = type ?? "text/plain";
     } else {

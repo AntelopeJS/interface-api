@@ -4,6 +4,7 @@ import {
   MakeParameterDecorator,
 } from "@antelopejs/interface-core/decorators";
 
+import { isString } from "./guards";
 import { DEFAULT_REQUEST_BODY_LIMIT, ReadBody, StreamBody } from "./body";
 import {
   ControllerMeta,
@@ -132,7 +133,7 @@ export const JSONBody = MakeParameterAndPropertyDecorator(
         if (!body || (body instanceof Buffer && body.length === 0)) {
           return undefined;
         }
-        if (typeof body === "string" || body instanceof Buffer) {
+        if (isString(body) || body instanceof Buffer) {
           return JSON.parse(body.toString());
         }
         throw new Error("Unable to parse JSON: Invalid body type");
