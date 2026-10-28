@@ -29,3 +29,16 @@ export function createRequestContext(
     response: new HTTPResult(),
   };
 }
+
+export interface BodyTestContext {
+  context: RequestContext;
+  request: IncomingMessage;
+}
+
+export function createBodyTestContext(contentLength?: number): BodyTestContext {
+  const request = createRequest();
+  if (contentLength !== undefined) {
+    request.headers["content-length"] = contentLength.toString();
+  }
+  return { request, context: createRequestContext(request) };
+}

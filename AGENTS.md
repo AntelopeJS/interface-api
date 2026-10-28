@@ -1,6 +1,6 @@
 # interface-api
 
-The AntelopeJS interface for HTTP and WebSocket APIs, published as `@antelopejs/interface-api`. All of the contract lives in `src/index.ts` and is exported from the package root; there are no subpaths. The HTTP server is in the implementing module, `@antelopejs/api`, not here.
+The AntelopeJS interface for HTTP and WebSocket APIs, published as `@antelopejs/interface-api`. The contract is exported from the package root, `src/index.ts`; there are no subpaths. The declarations live in private modules under `src/`, and `src/index.ts` re-exports them: types with `export type`, runtime values with `export import`, which keeps each export a writable data property. The order of those lines is the published key order of the CommonJS exports: keep it and append new exports at the end. `src/proxies.ts` creates every proxy the implementation binds, in their published order. The HTTP server is in the implementing module, `@antelopejs/api`, not here.
 
 ## Versioning of @antelopejs/interface-core
 
