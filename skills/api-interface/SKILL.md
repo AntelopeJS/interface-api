@@ -99,7 +99,8 @@ Sub-paths: `class Sub extends BookController.extend("archive") {}` mounts at
 - `HandlerPriority` orders competing prefix/postfix/monitor handlers; lower
   values run first (`HIGHEST = 0`).
 - `@Parameter(name, source)` defaults to `source: "param"` (route params like
-  `:id`); use `"query"` or `"header"` explicitly. `@MultiParameter` defaults to
+  `:id`); use `"query"` or `"header"` explicitly (there is no `Header` decorator: read a header with
+  `@Parameter("authorization", "header")`). `@MultiParameter` defaults to
   `"query"` and returns an array.
 - Streaming/SSE: inject `@WriteStream(contentType)` (a `PassThrough`) or call
   `response.getWriteStream()`; the response then ignores the body string.
