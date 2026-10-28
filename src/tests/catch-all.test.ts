@@ -1,4 +1,4 @@
-import { Controller, Get, Parameter } from "@antelopejs/interface-api";
+import { Controller, Get, Parameter } from "../index";
 
 import { FetchTest, SpyMethod } from "./fetch-test";
 

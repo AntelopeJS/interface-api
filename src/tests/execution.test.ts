@@ -17,7 +17,7 @@ import {
   SetParameterProvider,
   Transform,
   WriteStream,
-} from "@antelopejs/interface-api";
+} from "../index";
 
 import { FetchTest, SpyMethod, spyOf } from "./fetch-test";
 
