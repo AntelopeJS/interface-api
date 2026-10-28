@@ -167,7 +167,7 @@ describe("getRegisteredRouteHandlers", () => {
     assert.equal(providedValueOf(handler.properties.property), "parameter");
     assert.equal(handler.properties.property?.modifiers.length, 0);
     assert(Object.hasOwn(handler, "module"));
-    assert.equal(typeof handler.module, "string");
+    assert.ok(handler.module, "RegisterRoute names the responsible module");
     const providerCall = proxyCalls.at(-1);
     assert.equal(providerCall?.kind, "register");
     assert.equal(providerCall?.id, id.toString());
