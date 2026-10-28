@@ -1,18 +1,15 @@
 {
   "rules": {
-    "anti-slop/no-chained-type-assertions": 5,
     "anti-slop/no-runtime-typeof": 2,
-    "anti-slop/no-unknown-parameters": 4,
+    "anti-slop/no-unknown-parameters": 3,
     "anti-slop/no-unknown-returns": 2,
     "anti-slop/no-unsafe-dictionary-type": 1,
-    "anti-slop/require-safety-comment-for-type-assertion": 70,
+    "anti-slop/require-safety-comment-for-type-assertion": 2,
     "eslint/max-lines-per-function": 4,
-    "eslint/max-params": 4,
-    "typescript/restrict-template-expressions": 1,
-    "typescript/unbound-method": 21
+    "eslint/max-params": 4
   },
   "oversizeFiles": {
-    "src/index.ts": 43066,
-    "src/tests/index.test.ts": 38018
+    "src/index.ts": 42951,
+    "src/tests/index.test.ts": 37264
   }
 }

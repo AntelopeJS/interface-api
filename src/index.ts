@@ -533,13 +533,10 @@ export function Controller<T extends object = object>(
 
   c.location = location;
   c.extend = function (location: string) {
-    return Controller(
-      `${this.location}/${location}`,
-      this as ControllerClass<T>,
-    );
+    return Controller(`${this.location}/${location}`, this);
   };
 
-  return c as ControllerClass<T>;
+  return c;
 }
 
 /**
@@ -837,10 +834,7 @@ export function ProcessCallback(
   location?: string,
   priority?: HandlerPriority,
 ) {
-  const meta = GetMetadata(
-    target.constructor as ControllerClass,
-    ControllerMeta,
-  );
+  const meta = GetMetadata(target.constructor, ControllerMeta);
   const fullLocation =
     `${meta.location}/${location ?? (key as string)}`.replace(/\/+/g, "/");
 
@@ -1271,10 +1265,11 @@ export function SetParameterProvider(
   index: number | undefined,
   provider: ParameterProvider,
 ) {
-  GetMetadata(
-    target.constructor as ControllerClass,
-    ControllerMeta,
-  ).setProvider(key, index, provider);
+  GetMetadata(target.constructor, ControllerMeta).setProvider(
+    key,
+    index,
+    provider,
+  );
 }
 
 /**
@@ -1304,10 +1299,11 @@ export function AddParameterModifier(
   index: number | undefined,
   transformer: ParameterModifier,
 ) {
-  GetMetadata(
-    target.constructor as ControllerClass,
-    ControllerMeta,
-  ).addModifier(key, index, transformer);
+  GetMetadata(target.constructor, ControllerMeta).addModifier(
+    key,
+    index,
+    transformer,
+  );
 }
 
 /**
@@ -1357,7 +1353,7 @@ export const RawBody = MakeParameterAndPropertyDecorator(
 export const JSONBody = MakeParameterAndPropertyDecorator(
   (target, key, index, limit: number = DEFAULT_REQUEST_BODY_LIMIT) => {
     SetParameterProvider(target, key, index, (ctx: RequestContext) =>
-      ReadBody(ctx, limit).then((body: unknown) => {
+      ReadBody(ctx, limit).then((body: Awaited<RequestContext["body"]>) => {
         if (!body || (body instanceof Buffer && body.length === 0)) {
           return undefined;
         }
@@ -1388,7 +1384,7 @@ export async function* StreamBody(
   const request = context.rawRequest;
   try {
     for await (const chunk of request.iterator({ destroyOnReturn: false }))
-      yield chunk as Uint8Array;
+      yield chunk;
   } finally {
     request.resume();
   }

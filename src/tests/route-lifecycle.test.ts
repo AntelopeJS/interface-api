@@ -6,11 +6,11 @@ import {
   getRegisteredRoutes,
   HandlerPriority,
   RegisterRoute,
-  type RequestContext,
   type RouteHandler,
   routesProxy,
   UnregisterRoute,
 } from "../index";
+import { createRequestContext } from "./request-context";
 
 interface ProxyCall {
   handler?: RouteHandler;
@@ -29,7 +29,7 @@ function handlerAt(location: string): RouteHandler {
     properties: {},
     proto: {},
     callback: async () => new Response(),
-  } as unknown as RouteHandler;
+  };
 }
 
 function completeHandlerAt(location: string): RouteHandler {
@@ -52,7 +52,7 @@ function completeHandlerAt(location: string): RouteHandler {
 }
 
 function providedValueOf(parameter: ComputedParameter | null | undefined) {
-  return parameter?.provider?.({} as RequestContext);
+  return parameter?.provider?.(createRequestContext());
 }
 
 function stableFieldsOf(handler: RouteHandler | undefined) {

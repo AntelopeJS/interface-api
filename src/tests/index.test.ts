@@ -2,7 +2,7 @@ import WebSocket from "ws";
 import assert from "node:assert";
 import { PassThrough } from "node:stream";
 import sinon, { type SinonSpy } from "sinon";
-import type { IncomingMessage, ServerResponse } from "node:http";
+import { type IncomingMessage, ServerResponse } from "node:http";
 import {
   MakeMethodDecorator,
   MakeParameterAndPropertyDecorator,
@@ -40,10 +40,26 @@ import {
   ReadBody,
   StreamBody,
 } from "../index";
+import { createRequest, createRequestContext } from "./request-context";
 
-const SpyMethod = MakeMethodDecorator((_target, _key, descriptor) => {
-  descriptor.value = sinon.spy(descriptor.value);
+const spies = new Map<object, Map<PropertyKey, SinonSpy>>();
+
+const SpyMethod = MakeMethodDecorator((target, key, descriptor) => {
+  const spy = sinon.spy(descriptor.value);
+  descriptor.value = spy;
+  const controllerSpies = spies.get(target) ?? new Map<PropertyKey, SinonSpy>();
+  controllerSpies.set(key, spy);
+  spies.set(target, controllerSpies);
 });
+
+function spyOf<T extends object>(
+  controller: { prototype: T },
+  key: keyof T & string,
+): SinonSpy {
+  const spy = spies.get(controller.prototype)?.get(key);
+  assert(spy, `${key} is decorated with @SpyMethod`);
+  return spy;
+}
 
 const URL_BASE = "http://127.0.0.1:5010";
 
@@ -52,7 +68,7 @@ interface FetchTestOptions {
   status: number;
   method?: string;
   result?: string;
-  callCount?: [() => any, number];
+  callCount?: [SinonSpy, number];
   prepare?: (
     this: Mocha.Context,
     init: RequestInit,
@@ -81,10 +97,7 @@ function FetchTest(name: string, options: FetchTestOptions) {
       assert.equal(await res.text(), options.result, "Incorrect response body");
     }
     if (options.callCount) {
-      sinon.assert.callCount(
-        options.callCount[0] as SinonSpy,
-        options.callCount[1],
-      );
+      sinon.assert.callCount(options.callCount[0], options.callCount[1]);
     }
     if (options.postCheck) {
       await options.postCheck.apply(this, [res, options]);
@@ -274,20 +287,13 @@ describe("Routing", () => {
       status: 200,
       result: "hello:/partial/controller/hello",
       prepare() {
-        (
-          TestPartialControllerGetById.prototype.test as SinonSpy
-        ).resetHistory();
-        (
-          TestPartialControllerCreate.prototype.testCreate as SinonSpy
-        ).resetHistory();
+        spyOf(TestPartialControllerGetById, "test").resetHistory();
+        spyOf(TestPartialControllerCreate, "testCreate").resetHistory();
       },
-      callCount: [
-        TestPartialControllerGetById.prototype.test as unknown as () => any,
-        1,
-      ],
+      callCount: [spyOf(TestPartialControllerGetById, "test"), 1],
       postCheck() {
         sinon.assert.notCalled(
-          TestPartialControllerCreate.prototype.testCreate as SinonSpy,
+          spyOf(TestPartialControllerCreate, "testCreate"),
         );
       },
     });
@@ -301,7 +307,7 @@ describe("Routing", () => {
   });
 
   describe("Handler", () => {
-    const testRoute1 = TestRoutingController1.prototype.test as SinonSpy;
+    const testRoute1 = spyOf(TestRoutingController1, "test");
 
     FetchTest("Normal Call", {
       route: "/routing/controller1/test",
@@ -362,9 +368,9 @@ describe("Routing", () => {
       status: 200,
       postCheck: () => {
         sinon.assert.callOrder(
-          TestRoutingController0.prototype.testPrefixHigh as SinonSpy,
-          TestRoutingController0.prototype.testPrefixLow as SinonSpy,
-          TestRoutingController0.prototype.testPriority as SinonSpy,
+          spyOf(TestRoutingController0, "testPrefixHigh"),
+          spyOf(TestRoutingController0, "testPrefixLow"),
+          spyOf(TestRoutingController0, "testPriority"),
         );
       },
     });
@@ -374,7 +380,7 @@ describe("Routing", () => {
       method: "GET",
       status: 200,
       result: "Ok Early",
-      callCount: [TestRoutingController0.prototype.testEarlyReturn, 0],
+      callCount: [spyOf(TestRoutingController0, "testEarlyReturn"), 0],
     });
 
     FetchTest("Postfix Priority", {
@@ -383,9 +389,9 @@ describe("Routing", () => {
       status: 200,
       postCheck: () => {
         sinon.assert.callOrder(
-          TestRoutingController0.prototype.testPriority as SinonSpy,
-          TestRoutingController0.prototype.testPostfixHigh as SinonSpy,
-          TestRoutingController0.prototype.testPostfixLow as SinonSpy,
+          spyOf(TestRoutingController0, "testPriority"),
+          spyOf(TestRoutingController0, "testPostfixHigh"),
+          spyOf(TestRoutingController0, "testPostfixLow"),
         );
       },
     });
@@ -395,7 +401,7 @@ describe("Routing", () => {
       method: "GET",
       status: 200,
       result: "Ok Override",
-      callCount: [TestRoutingController0.prototype.testOverride, 1],
+      callCount: [spyOf(TestRoutingController0, "testOverride"), 1],
     });
   });
 });
@@ -478,7 +484,9 @@ export class TestExecutionController2 extends Controller(
   @Get()
   @SpyMethod()
   testModifierTransform(
-    @ConstantProvider("O") @Transform((_ctx, val) => `${val}k`) _param: string,
+    @ConstantProvider("O")
+    @Transform((_ctx, val) => `${String(val)}k`)
+    _param: string,
   ) {}
 }
 
@@ -569,9 +577,10 @@ describe("Execution", () => {
       method: "GET",
       status: 200,
       postCheck() {
-        const res = (
-          TestExecutionController2.prototype.testProviderContext as SinonSpy
-        ).lastCall.args[0] as RequestContext;
+        const res: RequestContext = spyOf(
+          TestExecutionController2,
+          "testProviderContext",
+        ).lastCall.args[0];
         assert.equal(
           res.url.pathname,
           "/execution/controller2/testProviderContext",
@@ -589,9 +598,8 @@ describe("Execution", () => {
         init.body = "Test";
       },
       postCheck() {
-        const res = (
-          TestExecutionController2.prototype.testProviderRawBody as SinonSpy
-        ).lastCall.args[0] as Buffer;
+        const res = spyOf(TestExecutionController2, "testProviderRawBody")
+          .lastCall.args[0];
         assert(Buffer.isBuffer(res), "Buffer object");
         assert.equal(res.toString(), "Test");
       },
@@ -603,10 +611,8 @@ describe("Execution", () => {
       status: 200,
       postCheck() {
         assert.equal(
-          (
-            TestExecutionController2.prototype
-              .testProviderParameterParam as SinonSpy
-          ).lastCall.args[0],
+          spyOf(TestExecutionController2, "testProviderParameterParam").lastCall
+            .args[0],
           "Ok",
           "Parameter value",
         );
@@ -622,10 +628,8 @@ describe("Execution", () => {
       },
       postCheck() {
         assert.equal(
-          (
-            TestExecutionController2.prototype
-              .testProviderParameterHeader as SinonSpy
-          ).lastCall.args[0],
+          spyOf(TestExecutionController2, "testProviderParameterHeader")
+            .lastCall.args[0],
           "Ok",
           "Parameter value",
         );
@@ -638,10 +642,8 @@ describe("Execution", () => {
       status: 200,
       postCheck() {
         assert.equal(
-          (
-            TestExecutionController2.prototype
-              .testProviderParameterQuery as SinonSpy
-          ).lastCall.args[0],
+          spyOf(TestExecutionController2, "testProviderParameterQuery").lastCall
+            .args[0],
           "Ok",
           "Parameter value",
         );
@@ -657,9 +659,9 @@ describe("Execution", () => {
       },
       postCheck() {
         assert.equal(
-          (
-            TestExecutionController2.prototype
-              .testProviderMultiParameterHeader as SinonSpy
+          spyOf(
+            TestExecutionController2,
+            "testProviderMultiParameterHeader",
           ).lastCall.args[0].toString(),
           ["Ok 1", "Ok 2"].toString(),
           "Parameter value",
@@ -674,9 +676,9 @@ describe("Execution", () => {
       status: 200,
       postCheck() {
         assert.equal(
-          (
-            TestExecutionController2.prototype
-              .testProviderMultiParameterQuery as SinonSpy
+          spyOf(
+            TestExecutionController2,
+            "testProviderMultiParameterQuery",
           ).lastCall.args[0].toString(),
           ["Ok1", "Ok2"].toString(),
           "Parameter value",
@@ -689,10 +691,8 @@ describe("Execution", () => {
       method: "GET",
       status: 200,
       postCheck() {
-        const res = (
-          TestExecutionController2.prototype
-            .testProviderResultPostfix as SinonSpy
-        ).lastCall.args[0] as HTTPResult;
+        const res = spyOf(TestExecutionController2, "testProviderResultPostfix")
+          .lastCall.args[0];
         assert(res instanceof HTTPResult, "HTTPResult object");
         assert.equal(res.getBody(), "Ok", "HTTPResult value");
       },
@@ -704,9 +704,8 @@ describe("Execution", () => {
       status: 200,
       result: "Ok",
       postCheck() {
-        const res = (
-          TestExecutionController2.prototype.testProviderWriteStream as SinonSpy
-        ).lastCall.args[0] as PassThrough;
+        const res = spyOf(TestExecutionController2, "testProviderWriteStream")
+          .lastCall.args[0];
         assert(res instanceof PassThrough, "Stream object");
       },
     });
@@ -719,8 +718,8 @@ describe("Execution", () => {
       status: 200,
       postCheck() {
         assert.equal(
-          (TestExecutionController2.prototype.testModifierTransform as SinonSpy)
-            .lastCall.args[0],
+          spyOf(TestExecutionController2, "testModifierTransform").lastCall
+            .args[0],
           "Ok",
           "Parameter value",
         );
@@ -875,15 +874,12 @@ describe("Monitor", () => {
     status: 200,
     result: "Ok Monitor",
     prepare() {
-      (
-        TestMonitorController1.prototype.testMonitorSuccess as SinonSpy
-      ).resetHistory();
+      spyOf(TestMonitorController1, "testMonitorSuccess").resetHistory();
     },
     postCheck() {
-      const spy = TestMonitorController1.prototype
-        .testMonitorSuccess as SinonSpy;
+      const spy = spyOf(TestMonitorController1, "testMonitorSuccess");
       sinon.assert.calledOnce(spy);
-      const context = spy.lastCall.args[0] as RequestContext;
+      const context: RequestContext = spy.lastCall.args[0];
       assert.equal(
         context.error,
         undefined,
@@ -898,20 +894,18 @@ describe("Monitor", () => {
     status: 500,
     result: monitorHandlerErrorMessage,
     prepare() {
-      (
-        TestMonitorController1.prototype.testMonitorError as SinonSpy
-      ).resetHistory();
+      spyOf(TestMonitorController1, "testMonitorError").resetHistory();
     },
     postCheck() {
-      const spy = TestMonitorController1.prototype.testMonitorError as SinonSpy;
+      const spy = spyOf(TestMonitorController1, "testMonitorError");
       sinon.assert.calledOnce(spy);
-      const context = spy.lastCall.args[0] as RequestContext;
+      const context: RequestContext = spy.lastCall.args[0];
       assert(
         context.error instanceof Error,
         "Monitor context should include thrown error",
       );
       assert.equal(
-        (context.error as Error).message,
+        context.error.message,
         monitorHandlerErrorMessage,
         "Monitor error message",
       );
@@ -924,13 +918,11 @@ describe("Monitor", () => {
     status: 200,
     result: "Handler Response",
     prepare() {
-      (
-        TestMonitorController1.prototype.testMonitorIgnoredReturn as SinonSpy
-      ).resetHistory();
+      spyOf(TestMonitorController1, "testMonitorIgnoredReturn").resetHistory();
     },
     postCheck() {
       sinon.assert.calledOnce(
-        TestMonitorController1.prototype.testMonitorIgnoredReturn as SinonSpy,
+        spyOf(TestMonitorController1, "testMonitorIgnoredReturn"),
       );
     },
   });
@@ -941,13 +933,11 @@ describe("Monitor", () => {
     status: 200,
     result: "Immutable Response",
     prepare() {
-      (
-        TestMonitorController1.prototype.testMonitorMutateResponse as SinonSpy
-      ).resetHistory();
+      spyOf(TestMonitorController1, "testMonitorMutateResponse").resetHistory();
     },
     postCheck(res) {
       sinon.assert.calledOnce(
-        TestMonitorController1.prototype.testMonitorMutateResponse as SinonSpy,
+        spyOf(TestMonitorController1, "testMonitorMutateResponse"),
       );
       assert.equal(
         res.headers.get("x-handler"),
@@ -968,14 +958,14 @@ describe("Monitor", () => {
     status: 200,
     result: "Stable Response",
     prepare() {
-      (
-        TestMonitorController1.prototype.testThrowingMonitorObserver as SinonSpy
+      spyOf(
+        TestMonitorController1,
+        "testThrowingMonitorObserver",
       ).resetHistory();
     },
     postCheck() {
       sinon.assert.calledOnce(
-        TestMonitorController1.prototype
-          .testThrowingMonitorObserver as SinonSpy,
+        spyOf(TestMonitorController1, "testThrowingMonitorObserver"),
       );
     },
   });
@@ -986,28 +976,24 @@ describe("Monitor", () => {
     status: 200,
     result: "Priority Response",
     prepare() {
-      (
-        TestMonitorController1.prototype.testMonitorPriorityHandler as SinonSpy
+      spyOf(
+        TestMonitorController1,
+        "testMonitorPriorityHandler",
       ).resetHistory();
-      (
-        TestMonitorController1.prototype.testMonitorPriorityHigh as SinonSpy
-      ).resetHistory();
-      (
-        TestMonitorController1.prototype.testMonitorPriorityLow as SinonSpy
-      ).resetHistory();
+      spyOf(TestMonitorController1, "testMonitorPriorityHigh").resetHistory();
+      spyOf(TestMonitorController1, "testMonitorPriorityLow").resetHistory();
     },
     postCheck() {
       sinon.assert.callOrder(
-        TestMonitorController1.prototype.testMonitorPriorityHandler as SinonSpy,
-        TestMonitorController1.prototype.testMonitorPriorityHigh as SinonSpy,
-        TestMonitorController1.prototype.testMonitorPriorityLow as SinonSpy,
+        spyOf(TestMonitorController1, "testMonitorPriorityHandler"),
+        spyOf(TestMonitorController1, "testMonitorPriorityHigh"),
+        spyOf(TestMonitorController1, "testMonitorPriorityLow"),
       );
     },
   });
 
   it("Runs on websocket upgrade success", async () => {
-    const spy = TestMonitorController1.prototype
-      .testMonitorWebsocketSuccess as SinonSpy;
+    const spy = spyOf(TestMonitorController1, "testMonitorWebsocketSuccess");
     spy.resetHistory();
 
     const ws = new WebSocket(`${URL_BASE}/monitor/controller1/wsSuccess`);
@@ -1018,7 +1004,7 @@ describe("Monitor", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 10));
     sinon.assert.calledOnce(spy);
-    const context = spy.lastCall.args[0] as RequestContext;
+    const context: RequestContext = spy.lastCall.args[0];
     assert.equal(
       context.error,
       undefined,
@@ -1030,8 +1016,7 @@ describe("Monitor", () => {
   });
 
   it("Runs on websocket upgrade error", async () => {
-    const spy = TestMonitorController1.prototype
-      .testMonitorWebsocketError as SinonSpy;
+    const spy = spyOf(TestMonitorController1, "testMonitorWebsocketError");
     spy.resetHistory();
 
     const ws = new WebSocket(`${URL_BASE}/monitor/controller1/wsError`);
@@ -1043,13 +1028,13 @@ describe("Monitor", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 10));
     sinon.assert.calledOnce(spy);
-    const context = spy.lastCall.args[0] as RequestContext;
+    const context: RequestContext = spy.lastCall.args[0];
     assert(
       context.error instanceof Error,
       "Websocket monitor should receive thrown error",
     );
     assert.equal(
-      (context.error as Error).message,
+      context.error.message,
       monitorWebsocketErrorMessage,
       "Websocket monitor error message",
     );
@@ -1219,32 +1204,20 @@ describe("WebSocket", () => {
   });
 });
 
-type BodyRequest = PassThrough & IncomingMessage;
-
 interface BodyTestContext {
   context: RequestContext;
-  request: BodyRequest;
+  request: IncomingMessage;
 }
 
 function createBodyTestContext(contentLength?: number): BodyTestContext {
-  const request = new PassThrough() as BodyRequest;
-  request.headers = {};
+  const request = createRequest();
   if (contentLength !== undefined) {
     request.headers["content-length"] = contentLength.toString();
   }
-  return {
-    request,
-    context: {
-      rawRequest: request,
-      rawResponse: {} as ServerResponse,
-      url: new URL(URL_BASE),
-      routeParameters: {},
-      response: new LocalHTTPResult(),
-    },
-  };
+  return { request, context: createRequestContext(request) };
 }
 
-function assertBodyListenersRemoved(request: BodyRequest): void {
+function assertBodyListenersRemoved(request: IncomingMessage): void {
   assert.equal(request.listenerCount("data"), 0);
   assert.equal(request.listenerCount("end"), 0);
   assert.equal(request.listenerCount("error"), 0);
@@ -1263,7 +1236,8 @@ describe("ReadBody limits", () => {
   it("Accepts a normal body with the default limit", async () => {
     const test = createBodyTestContext();
     const body = ReadBody(test.context);
-    test.request.end("normal body");
+    test.request.push("normal body");
+    test.request.push(null);
 
     assert.equal((await body).toString(), "normal body");
     assertBodyListenersRemoved(test.request);
@@ -1272,7 +1246,8 @@ describe("ReadBody limits", () => {
   it("Accepts a body exactly at the configured limit", async () => {
     const test = createBodyTestContext(4);
     const body = ReadBody(test.context, 4);
-    test.request.end("test");
+    test.request.push("test");
+    test.request.push(null);
 
     assert.equal((await body).toString(), "test");
     assertBodyListenersRemoved(test.request);
@@ -1289,8 +1264,8 @@ describe("ReadBody limits", () => {
   it("Rejects and stops an oversized chunked body", async () => {
     const test = createBodyTestContext();
     const body = ReadBody(test.context, 4);
-    test.request.write("test");
-    test.request.write("!");
+    test.request.push("test");
+    test.request.push("!");
 
     await assertPayloadTooLarge(body);
     assert.equal(test.request.isPaused(), true);
@@ -1301,7 +1276,8 @@ describe("ReadBody limits", () => {
     const test = createBodyTestContext(5);
     const permissiveBody = ReadBody(test.context, 8);
     const strictBody = ReadBody(test.context, 4);
-    test.request.end("12345");
+    test.request.push("12345");
+    test.request.push(null);
 
     assert.equal((await permissiveBody).toString(), "12345");
     await assertPayloadTooLarge(strictBody);
@@ -1311,7 +1287,8 @@ describe("ReadBody limits", () => {
   it("Applies a stricter limit to an already cached body", async () => {
     const test = createBodyTestContext(5);
     const body = ReadBody(test.context, 8);
-    test.request.end("12345");
+    test.request.push("12345");
+    test.request.push(null);
     assert.equal((await body).toString(), "12345");
 
     await assertPayloadTooLarge(ReadBody(test.context, 4));
@@ -1321,52 +1298,23 @@ describe("ReadBody limits", () => {
   it("Resumes for a permissive consumer after an earlier rejection", async () => {
     const test = createBodyTestContext();
     const strictBody = ReadBody(test.context, 4);
-    test.request.write("12345");
+    test.request.push("12345");
     await assertPayloadTooLarge(strictBody);
 
     const body = ReadBody(test.context, 8);
-    test.request.end();
+    test.request.push(null);
     assert.equal((await body).toString(), "12345");
     assertBodyListenersRemoved(test.request);
   });
 });
 
-interface StubRequest {
-  method: string;
-  url: string;
-}
-
-interface CapturedServerResponse {
-  req: StubRequest;
-  headers: Record<string, string>;
-  status?: number;
-  body?: string;
-  ended: boolean;
-  writeHead: (
-    status: number,
-    headers?: Record<string, string>,
-  ) => CapturedServerResponse;
-  end: (body?: string) => void;
-}
-
-function createCapturedResponse(): CapturedServerResponse {
-  const response: CapturedServerResponse = {
-    req: { method: "GET", url: "/result" },
-    headers: {},
-    ended: false,
-    writeHead(status, headers) {
-      response.status = status;
-      for (const [name, value] of Object.entries(headers ?? {})) {
-        response.headers[name.toLowerCase()] = value;
-      }
-      return response;
-    },
-    end(body) {
-      response.body = body;
-      response.ended = true;
-    },
+function createCapturedResponse() {
+  const response = new ServerResponse(createRequest());
+  return {
+    response,
+    writeHead: sinon.spy(response, "writeHead"),
+    end: sinon.spy(response, "end"),
   };
-  return response;
 }
 
 describe("StreamBody", () => {
@@ -1377,8 +1325,9 @@ describe("StreamBody", () => {
       for await (const chunk of StreamBody(test.context))
         chunks.push(Buffer.from(chunk).toString());
     })();
-    test.request.write("ab");
-    test.request.end("c");
+    test.request.push("ab");
+    test.request.push("c");
+    test.request.push(null);
     await reading;
     assert.equal(chunks.join(""), "abc");
   });
@@ -1391,17 +1340,19 @@ describe("StreamBody", () => {
       for await (const chunk of StreamBody(test.context))
         received += chunk.byteLength;
     })();
-    test.request.end(Buffer.alloc(size));
+    test.request.push(Buffer.alloc(size));
+    test.request.push(null);
     await reading;
     assert.equal(received, size);
   });
 
   it("Discards the rest of the body when the reader stops early", async () => {
     const test = createBodyTestContext();
-    test.request.write("first");
+    test.request.push("first");
     for await (const _chunk of StreamBody(test.context)) break;
     const drained = new Promise((resolve) => test.request.once("end", resolve));
-    test.request.end("rest");
+    test.request.push("rest");
+    test.request.push(null);
     await drained;
     assert.equal(
       test.request.readableEnded,
@@ -1442,40 +1393,44 @@ describe("HTTPResult response contract", () => {
     Object.setPrototypeOf(headers, { "X-Inherited": "excluded" });
     headers["X-Current"] = "current";
     result.addHeader("Content-Type", "text/html");
-    const response = createCapturedResponse();
+    const captured = createCapturedResponse();
 
-    result.sendResponse(response as unknown as ServerResponse);
+    result.sendResponse(captured.response);
 
-    assert.equal(response.status, 202);
-    assert.equal(response.body, '{"ok":true}');
-    assert.equal(response.headers["x-current"], "current");
-    assert.equal(response.headers["x-inherited"], undefined);
-    assert.equal(response.headers["content-type"], "application/json");
+    const sent = captured.writeHead.firstCall.args[1];
+    assert(sent !== undefined && !Array.isArray(sent), "Headers object sent");
+    assert.equal(captured.response.statusCode, 202);
+    assert.equal(captured.end.firstCall.args[0], '{"ok":true}');
+    assert.equal(sent["X-Current"], "current");
+    assert.equal(sent["X-Inherited"], undefined);
+    assert.equal(sent["Content-Type"], "application/json");
   });
 
   it("Sends HEAD without a body and closes an attached stream", () => {
     const result = new LocalHTTPResult(204, { ignored: true });
     const stream = result.getWriteStream("text/event-stream", 206);
-    const response = createCapturedResponse();
+    const captured = createCapturedResponse();
 
-    result.sendHeadResponse(response as unknown as ServerResponse);
+    result.sendHeadResponse(captured.response);
 
-    assert.equal(response.status, 206);
-    assert.equal(response.body, undefined);
-    assert.equal(response.headers["content-type"], "text/event-stream");
-    assert.equal(response.ended, true);
+    const sent = captured.writeHead.firstCall.args[1];
+    assert(sent !== undefined && !Array.isArray(sent), "Headers object sent");
+    assert.equal(captured.response.statusCode, 206);
+    assert.equal(captured.end.firstCall.args[0], undefined);
+    assert.equal(sent["Content-Type"], "text/event-stream");
+    assert.equal(captured.response.writableEnded, true);
     assert.equal(stream.writableEnded, true);
   });
 
   it("Ends an aborted stream response without piping", () => {
     const result = new LocalHTTPResult();
     result.getWriteStream();
-    const response = createCapturedResponse();
+    const captured = createCapturedResponse();
 
-    result.sendResponse(response as unknown as ServerResponse, true);
+    result.sendResponse(captured.response, true);
 
-    assert.equal(response.status, 200);
-    assert.equal(response.body, "");
-    assert.equal(response.ended, true);
+    assert.equal(captured.response.statusCode, 200);
+    assert.equal(captured.end.firstCall.args[0], "");
+    assert.equal(captured.response.writableEnded, true);
   });
 });
