@@ -296,11 +296,14 @@ export class HTTPResult {
  * Lower values indicate higher priority and will execute first.
  */
 export enum HandlerPriority {
-  HIGHEST = 0, // Executes first
+  /** Executes first. */
+  HIGHEST = 0,
   HIGH = 1,
-  NORMAL = 2, // Default priority
+  /** Default priority. */
+  NORMAL = 2,
   LOW = 3,
-  LOWEST = 4, // Executes last
+  /** Executes last. */
+  LOWEST = 4,
 }
 
 /**
@@ -343,9 +346,9 @@ export interface RequestContext {
   error?: unknown;
 
   /**
-   * Websocket connection.
+   * Websocket connection (the implementation's `WebsocketConnection`).
    */
-  connection?: unknown /* WebsocketConnection */;
+  connection?: unknown;
 }
 
 /**
@@ -751,16 +754,14 @@ let nextId = 0;
 /**
  * Register a RouteHandler to the API.
  *
+ * Registers a copy that carries {@link RouteHandler.module}; the given handler
+ * is not modified.
+ *
  * @param handler Route handler
  * @returns New route ID
  */
 export function RegisterRoute(handler: RouteHandler) {
   const id = nextId++;
-  // Resolve the owning module here, while the registering controller's frame is
-  // still on the stack (RegisterRoute runs synchronously during module load).
-  // Enrich a shallow copy rather than mutating the caller's handler object, so
-  // onRegister subscribers and getRegisteredRoutes both see `module` without the
-  // input object gaining an unexpected property.
   const enriched: RouteHandler = { ...handler, module: GetResponsibleModule() };
   Logging.Debug(
     `Registered ${enriched.method.toUpperCase()} ${enriched.location} (${enriched.callback.name || "anonymous"})`,
@@ -824,7 +825,8 @@ export function getRegisteredRoutes(): Array<{
  * @param method HTTP method
  * @param location Endpoint location
  * @param priority Handler priority
- * @returns New route ID
+ * @returns `{ id }`, an object because {@link Route} returns it as a method
+ * decorator's property descriptor
  */
 export function ProcessCallback(
   target: any,
@@ -842,7 +844,6 @@ export function ProcessCallback(
   const fullLocation =
     `${meta.location}/${location ?? (key as string)}`.replace(/\/+/g, "/");
 
-  // Method decorator need an object as return value
   return {
     id: RegisterRoute({
       mode,

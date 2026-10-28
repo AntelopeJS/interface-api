@@ -92,8 +92,6 @@ function FetchTest(name: string, options: FetchTestOptions) {
   });
 }
 
-// Routing Tests
-
 export class TestRoutingController0 extends Controller("/") {
   @Get()
   test() {}
@@ -313,7 +311,6 @@ describe("Routing", () => {
       prepare: () => testRoute1.resetHistory(),
     });
 
-    // TODO: review expected result
     FetchTest("Options Call", {
       route: "/routing/controller1/test",
       method: "OPTIONS",
@@ -402,8 +399,6 @@ describe("Routing", () => {
     });
   });
 });
-
-// Execution Tests
 
 const ConstantProvider = MakeParameterAndPropertyDecorator(
   (target, key, index, value: any) =>
@@ -782,8 +777,6 @@ describe("Execution", () => {
   });
 });
 
-// Monitor Tests
-
 const monitorHandlerErrorMessage = "Monitor handler error";
 const monitorWebsocketErrorMessage = "Monitor websocket error";
 
@@ -1063,8 +1056,6 @@ describe("Monitor", () => {
   });
 });
 
-// Catch-All Route Tests
-
 export class TestCatchAllController1 extends Controller("/catchall/terminal") {
   @Get("/::path")
   @SpyMethod()
@@ -1170,8 +1161,6 @@ describe("Catch-All Routes", () => {
     });
   });
 });
-
-// WebSocket Tests
 
 const testWSReceiver = sinon.spy();
 let testWSSocket: WebSocket;
@@ -1413,9 +1402,12 @@ describe("StreamBody", () => {
     for await (const _chunk of StreamBody(test.context)) break;
     const drained = new Promise((resolve) => test.request.once("end", resolve));
     test.request.end("rest");
-    // A destroyed request never ends: reaching "end" shows the rest was read.
     await drained;
-    assert.equal(test.request.readableEnded, true);
+    assert.equal(
+      test.request.readableEnded,
+      true,
+      "A destroyed request never ends: reaching end shows the rest was read",
+    );
   });
 });
 
