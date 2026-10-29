@@ -49,6 +49,13 @@ export function UnregisterRoute(id: number): void {
   routesProxy.unregister(id.toString());
 }
 
+type RouteArguments = [
+  mode: RouteHandlerMode,
+  method: string,
+  location?: string,
+  priority?: HandlerPriority,
+];
+
 function handlerSegment(key: PropertyKey): string | number {
   if (isSymbol(key)) {
     throw new TypeError("Cannot convert a Symbol value to a string");
@@ -62,10 +69,9 @@ function handlerSegment(key: PropertyKey): string | number {
  * @param target Controller class
  * @param key Handler key
  * @param descriptor Handler descriptor
- * @param mode Handler mode (prefix, handler, postfix, websocket)
- * @param method HTTP method
- * @param location Endpoint location
- * @param priority Handler priority
+ * @param route Handler mode (prefix, handler, postfix, websocket), HTTP method,
+ * endpoint location and handler priority, in that order; the location and the
+ * priority are optional
  * @returns `{ id }`, an object because {@link Route} returns it as a method
  * decorator's property descriptor
  */
@@ -73,11 +79,9 @@ export function ProcessCallback(
   target: any,
   key: PropertyKey,
   descriptor: PropertyDescriptor,
-  mode: RouteHandlerMode,
-  method: string,
-  location?: string,
-  priority?: HandlerPriority,
+  ...route: RouteArguments
 ) {
+  const [mode, method, location, priority] = route;
   const meta = GetMetadata(target.constructor, ControllerMeta);
   const fullLocation =
     `${meta.location}/${location ?? handlerSegment(key)}`.replace(/\/+/g, "/");

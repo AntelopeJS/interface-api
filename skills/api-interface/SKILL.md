@@ -110,7 +110,11 @@ Sub-paths: `class Sub extends BookController.extend("archive") {}` mounts at
   `AddParameterModifier` (provider -> modifiers chain, each may be async),
   wrapped with `MakeParameterDecorator` from
   `@antelopejs/interface-core/decorators` (not exported by this package), or
-  attach per-value transforms with `@Transform(fn)`.
+  attach per-value transforms with `@Transform(fn)`. `ParameterProvider<Value>`
+  and `ParameterModifier<Next>` type the value they produce (default `unknown`;
+  a modifier receives its previous value as `unknown`);
+  `context.body` is the `Promise<Buffer>` that `ReadBody` caches, undefined
+  until a handler reads the body.
 - Providing this interface is the job of an HTTP server module (it implements
   the interface functions and consumes the registered route handlers); normal
   application code only consumes the decorators above.
