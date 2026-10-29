@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.1.0
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.16...v0.1.0)
+
+### 🚀 Enhancements
+
+- **api:** ⚠️  Tighten the published contract ([#45](https://github.com/AntelopeJS/interface-api/pull/45))
+
+### 💅 Refactors
+
+- Clean the repo with the guardrail pack ([#43](https://github.com/AntelopeJS/interface-api/pull/43))
+- Clear avoidable findings with pack 0.2.11 ([#44](https://github.com/AntelopeJS/interface-api/pull/44))
+
+### 🏡 Chore
+
+- Adopt the guardrail pack from tooling-configs 0.2.0 ([#39](https://github.com/AntelopeJS/interface-api/pull/39))
+- Configure Renovate with the shared preset ([#40](https://github.com/AntelopeJS/interface-api/pull/40))
+
+### ✅ Tests
+
+- **skills:** Add eval cases for the interface-api skills ([#41](https://github.com/AntelopeJS/interface-api/pull/41))
+
+#### ⚠️ Breaking Changes
+
+- **api:** ⚠️  Tighten the published contract ([#45](https://github.com/AntelopeJS/interface-api/pull/45))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli <rizzitelli.antony@pm.me>
+
 ## v0.0.16
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.0.15...v0.0.16)
