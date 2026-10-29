@@ -54,9 +54,11 @@ export interface RequestContext {
   routeParameters: Record<string, string>;
 
   /**
-   * Raw request body.
+   * Raw request body: the pending read that `ReadBody` stores here on
+   * its first call, and that later calls reuse. It stays undefined until a
+   * handler reads the body.
    */
-  body?: unknown;
+  body?: Promise<Buffer>;
 
   /**
    * HTTPResponse object that will be sent on completion.
@@ -79,24 +81,28 @@ export interface RequestContext {
  *
  * Provider => [Modifier...] => Parameter/Property in handler
  *
+ * @template Value Type of the value the provider produces
  * @param context Request context
  * @returns Value passed to modifiers or directly to the handler
  */
-export type ParameterProvider = (context: RequestContext) => unknown;
+export type ParameterProvider<Value = unknown> = (
+  context: RequestContext,
+) => Value;
 
 /**
  * For computed parameters, a modifier in the chain of the parameter:
  *
  * Provider => [Modifier...] => Parameter/Property in handler
  *
+ * @template Next Type of the value the modifier produces
  * @param context Request context
  * @param previous Previous value in the chain (Return value of provider or previous modifier)
  * @returns Value passed to next modifier or handler
  */
-export type ParameterModifier = (
+export type ParameterModifier<Next = unknown> = (
   context: RequestContext,
   previous: unknown,
-) => unknown;
+) => Next;
 
 /**
  * Combination of a parameter provider and zero or more parameter modifiers.

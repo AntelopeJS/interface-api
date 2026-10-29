@@ -51,9 +51,7 @@ export function ReadBody(
       readRequestBody(context.rawRequest, state),
     );
   }
-  return (context.body as Promise<Buffer>).then((body) =>
-    enforceBodyLimit(body, limit),
-  );
+  return context.body.then((body) => enforceBodyLimit(body, limit));
 }
 
 function readRequestBody(

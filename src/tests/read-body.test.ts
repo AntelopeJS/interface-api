@@ -34,6 +34,20 @@ describe("ReadBody limits", () => {
     assertBodyListenersRemoved(test.request);
   });
 
+  it("Keeps the pending read in context.body for later readers", async () => {
+    const test = createBodyTestContext();
+    assert.equal(test.context.body, undefined);
+
+    const body = ReadBody(test.context);
+    test.request.push("shared");
+    test.request.push(null);
+
+    assert(test.context.body instanceof Promise);
+    assert.equal((await test.context.body).toString(), "shared");
+    assert.equal((await body).toString(), "shared");
+    assert.equal((await ReadBody(test.context)).toString(), "shared");
+  });
+
   it("Accepts a body exactly at the configured limit", async () => {
     const test = createBodyTestContext(4);
     const body = ReadBody(test.context, 4);
