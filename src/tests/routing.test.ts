@@ -13,7 +13,7 @@ import {
   Put,
   type RequestContext,
   Route,
-} from "@antelopejs/interface-api";
+} from "../index";
 
 import { FetchTest, SpyMethod, spyOf } from "./fetch-test";
 

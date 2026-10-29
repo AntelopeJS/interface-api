@@ -12,7 +12,7 @@ import {
   type RequestContext,
   Result,
   WebsocketHandler,
-} from "@antelopejs/interface-api";
+} from "../index";
 
 import { FetchTest, SpyMethod, spyOf, URL_BASE } from "./fetch-test";
 

@@ -1,6 +1,7 @@
 import { Logging } from "@antelopejs/interface-core/logging";
 import { GetMetadata, GetResponsibleModule } from "@antelopejs/interface-core";
 
+import { isSymbol } from "./guards";
 import { routesProxy } from "./proxies";
 import { ControllerMeta } from "./controller";
 import {
@@ -48,6 +49,13 @@ export function UnregisterRoute(id: number): void {
   routesProxy.unregister(id.toString());
 }
 
+function handlerSegment(key: PropertyKey): string | number {
+  if (isSymbol(key)) {
+    throw new TypeError("Cannot convert a Symbol value to a string");
+  }
+  return key;
+}
+
 /**
  * Register a RouteHandler to the API from a decorator.
  *
@@ -72,7 +80,7 @@ export function ProcessCallback(
 ) {
   const meta = GetMetadata(target.constructor, ControllerMeta);
   const fullLocation =
-    `${meta.location}/${location ?? (key as string)}`.replace(/\/+/g, "/");
+    `${meta.location}/${location ?? handlerSegment(key)}`.replace(/\/+/g, "/");
 
   return {
     id: RegisterRoute({

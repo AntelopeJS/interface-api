@@ -1,11 +1,7 @@
 import WebSocket from "ws";
 import assert from "node:assert";
 import sinon from "sinon";
-import {
-  Connection,
-  Controller,
-  WebsocketHandler,
-} from "@antelopejs/interface-api";
+import { Connection, Controller, WebsocketHandler } from "../index";
 
 import { SpyMethod, URL_BASE } from "./fetch-test";
 

@@ -10,6 +10,7 @@ The AntelopeJS interface for HTTP and WebSocket APIs, published as `@antelopejs/
 
 - `pnpm test` builds `dist`, then `ajs module test .` reads `src/antelope.test.ts` (`antelopeJs.test` in package.json) and runs the compiled suites in `dist/tests` against `@antelopejs/api` 1.3.0, a devDependency loaded as a local module. `pnpm-workspace.yaml` overrides its `@antelopejs/interface-api` dependency with a link to this package, so the suites exercise the local build: without the override they would test the published copy the api module installs. Port 5010 on 127.0.0.1 must be free.
 - The suites live in `src/tests/`, not `src/test/`, so `knip.config.ts` lists them as entries.
+- The suites import the contract from `../index`, never from `@antelopejs/interface-api`: the package name resolves to the installed published copy unless a self-link exists, and `antelopejs/no-self-import-in-tests` rejects it.
 - The compiled suites ship in `dist/tests` and also run from implementation modules (`antelopeJs.implements`), where the core resolver hands out facades for every passed value: assert behaviour and structure, never reference identity.
 - `route-lifecycle.test.ts` replaces the register and unregister callbacks of `routesProxy` with a recording provider in its `before` hook, so the cases assert what reaches the registry. The controllers of the other suites register when the files load, before any hook runs, so the api module already serves their routes; a suite that registers routes later would not be served once that hook has run.
 - `pnpm run checks` does not run the documentation check. CI runs it through `AntelopeJS/tooling-configs/actions/docs` on `README.md` and `docs/`, and type-checks the `docs-check` fences against `docs/tsconfig.json`. To run it locally, check out `AntelopeJS/tooling-configs` at the commit `ci-node.yml` pins, run `npm ci --prefix actions/docs --omit=dev`, then from this repository run `node <checkout>/actions/docs/check.mjs --files "$(printf 'README.md\ndocs')" --typescript-project docs/tsconfig.json`.
@@ -75,6 +76,7 @@ Verify a boundary against the imports a developer or agent would plausibly write
 | Comments are TSDoc, directives, or `SAFETY:` only                              | `antelopejs/no-comments`                            |
 | Every test asserts                                                             | `antelopejs/require-assertion`                      |
 | Tests read no files outside fixtures, helpers, locales                         | `antelopejs/no-fs-read-in-tests`                    |
+| Tests import the code under test from local source, not their own package name | `antelopejs/no-self-import-in-tests`                |
 | No assertion that restates a constant                                          | `antelopejs/no-constant-value-assertion`            |
 | No test whose only check is "is a function"                                    | `antelopejs/no-typeof-function-only-test`           |
 | Params ≤ 5, function ≤ 120 lines, file ≤ 500 lines, depth ≤ 4, complexity ≤ 20 | `eslint/max-*`, `eslint/complexity`                 |
