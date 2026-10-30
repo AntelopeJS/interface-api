@@ -15,6 +15,7 @@ import {
 } from "../index";
 
 import { FetchTest, SpyMethod, spyOf, URL_BASE } from "./fetch-test";
+import { isRequestContext } from "./request-context";
 
 const monitorHandlerErrorMessage = "Monitor handler error";
 
@@ -166,7 +167,8 @@ function websocketMonitorTests(): void {
 
     await new Promise((resolve) => setTimeout(resolve, 10));
     sinon.assert.calledOnce(spy);
-    const context: RequestContext = spy.lastCall.args[0];
+    const context: unknown = spy.lastCall.args[0];
+    assert(isRequestContext(context), "Monitor receives a request context");
     assert.equal(
       context.error,
       undefined,
@@ -190,7 +192,8 @@ function websocketMonitorTests(): void {
 
     await new Promise((resolve) => setTimeout(resolve, 10));
     sinon.assert.calledOnce(spy);
-    const context: RequestContext = spy.lastCall.args[0];
+    const context: unknown = spy.lastCall.args[0];
+    assert(isRequestContext(context), "Monitor receives a request context");
     assert(
       context.error instanceof Error,
       "Websocket monitor should receive thrown error",
@@ -215,7 +218,8 @@ describe("Monitor", () => {
     postCheck() {
       const spy = spyOf(TestMonitorController1, "testMonitorSuccess");
       sinon.assert.calledOnce(spy);
-      const context: RequestContext = spy.lastCall.args[0];
+      const context: unknown = spy.lastCall.args[0];
+      assert(isRequestContext(context), "Monitor receives a request context");
       assert.equal(
         context.error,
         undefined,
@@ -235,7 +239,8 @@ describe("Monitor", () => {
     postCheck() {
       const spy = spyOf(TestMonitorController1, "testMonitorError");
       sinon.assert.calledOnce(spy);
-      const context: RequestContext = spy.lastCall.args[0];
+      const context: unknown = spy.lastCall.args[0];
+      assert(isRequestContext(context), "Monitor receives a request context");
       assert(
         context.error instanceof Error,
         "Monitor context should include thrown error",

@@ -134,7 +134,8 @@ export const JSONBody = MakeParameterAndPropertyDecorator(
           return undefined;
         }
         if (isString(body) || body instanceof Buffer) {
-          return JSON.parse(body.toString());
+          const parsed: unknown = JSON.parse(body.toString());
+          return parsed;
         }
         throw new Error("Unable to parse JSON: Invalid body type");
       }),

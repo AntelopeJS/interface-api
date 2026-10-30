@@ -20,6 +20,7 @@ import {
 } from "../index";
 
 import { FetchTest, SpyMethod, spyOf } from "./fetch-test";
+import { isRequestContext } from "./request-context";
 
 const ConstantProvider = MakeParameterAndPropertyDecorator(
   (target, key, index, value: any) =>
@@ -323,10 +324,11 @@ describe("Execution", () => {
       method: "GET",
       status: 200,
       postCheck() {
-        const res: RequestContext = spyOf(
+        const res: unknown = spyOf(
           TestExecutionController2,
           "testProviderContext",
         ).lastCall.args[0];
+        assert(isRequestContext(res), "Context is a request context");
         assert.equal(
           res.url.pathname,
           "/execution/controller2/testProviderContext",
@@ -344,8 +346,10 @@ describe("Execution", () => {
         init.body = "Test";
       },
       postCheck() {
-        const res = spyOf(TestExecutionController2, "testProviderRawBody")
-          .lastCall.args[0];
+        const res: unknown = spyOf(
+          TestExecutionController2,
+          "testProviderRawBody",
+        ).lastCall.args[0];
         assert(Buffer.isBuffer(res), "Buffer object");
         assert.equal(res.toString(), "Test");
       },
@@ -358,8 +362,10 @@ describe("Execution", () => {
       method: "GET",
       status: 200,
       postCheck() {
-        const res = spyOf(TestExecutionController2, "testProviderResultPostfix")
-          .lastCall.args[0];
+        const res: unknown = spyOf(
+          TestExecutionController2,
+          "testProviderResultPostfix",
+        ).lastCall.args[0];
         assert(res instanceof HTTPResult, "HTTPResult object");
         assert.equal(res.getBody(), "Ok", "HTTPResult value");
       },
@@ -371,8 +377,10 @@ describe("Execution", () => {
       status: 200,
       result: "Ok",
       postCheck() {
-        const res = spyOf(TestExecutionController2, "testProviderWriteStream")
-          .lastCall.args[0];
+        const res: unknown = spyOf(
+          TestExecutionController2,
+          "testProviderWriteStream",
+        ).lastCall.args[0];
         assert(res instanceof PassThrough, "Stream object");
       },
     });
