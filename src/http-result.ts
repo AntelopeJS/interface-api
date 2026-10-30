@@ -79,7 +79,7 @@ export class HTTPResult {
    */
   public setBody(body: any, type?: string) {
     if (body === undefined || isString(body)) {
-      this.body = body || "";
+      this.body = isString(body) ? body : "";
       this.contentType = type ?? "text/plain";
     } else {
       this.body = JSON.stringify(body);
