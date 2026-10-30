@@ -75,11 +75,13 @@ The decorators register the routes when the class is defined. `@antelopejs/api` 
 
 Use with `@antelopejs/core` 1.x and the following peer dependency:
 
-<!-- docs-compat: ./package.json#peerDependencies -->
+<!-- antelopejs-docs-compat:start -->
 
-| Package                      | Range            |
-| ---------------------------- | ---------------- |
-| `@antelopejs/interface-core` | `>=0.2.4 <1.0.0` |
+| Package                      | Supported        | Tested with |
+| ---------------------------- | ---------------- | ----------- |
+| `@antelopejs/interface-core` | `>=0.2.4 <1.0.0` | `0.2.4`     |
+
+<!-- antelopejs-docs-compat:end -->
 
 ## Contributing
 
