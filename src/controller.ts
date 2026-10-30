@@ -261,7 +261,10 @@ export function Controller<T extends object = object>(
   const c: any = base ? class extends base {} : class {};
 
   c.location = location;
-  c.extend = function (location: string) {
+  c.extend = function (
+    this: Class<T> & { location: string },
+    location: string,
+  ) {
     return Controller(`${this.location}/${location}`, this);
   };
 
