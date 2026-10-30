@@ -73,7 +73,7 @@ The decorators register the routes when the class is defined. `@antelopejs/api` 
 
 ## Compatibility
 
-Use with `@antelopejs/core` 1.x and the following peer dependency:
+The module declares this peer dependency:
 
 <!-- antelopejs-docs-compat:start -->
 
