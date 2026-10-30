@@ -183,12 +183,12 @@ export class ControllerMeta {
    */
   getComputedParameter(key: PropertyKey, param: number | undefined) {
     if (param === undefined) {
-      if (!Object.hasOwn(this.computed_props, key)) {
+      if (!(key in this.computed_props)) {
         this.computed_props[key] = { modifiers: [] };
       }
       return this.computed_props[key];
     } else {
-      if (!Object.hasOwn(this.computed_params, key)) {
+      if (!(key in this.computed_params)) {
         this.computed_params[key] = [];
       }
       if (!(param in this.computed_params[key])) {
@@ -235,9 +235,7 @@ export class ControllerMeta {
    * @returns ComputedParameter list
    */
   getParameterArray(key: PropertyKey) {
-    const paramsMap = Object.hasOwn(this.computed_params, key)
-      ? this.computed_params[key]
-      : {};
+    const paramsMap = this.computed_params[key] || {};
     const paramsMax = Object.keys(paramsMap)
       .map((val) => parseInt(val, 10))
       .reduce((a, b) => Math.max(a, b), 0);
