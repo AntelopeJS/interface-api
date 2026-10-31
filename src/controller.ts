@@ -254,7 +254,7 @@ export class ControllerMeta {
  * @param base Optional base Controller to inherit properties from
  * @returns New Controller
  */
-export function Controller(location: string): ControllerClass;
+export function Controller(location: string): ControllerClass<object>;
 export function Controller<T extends object>(
   location: string,
   base: Class<T>,
@@ -262,7 +262,7 @@ export function Controller<T extends object>(
 export function Controller<T extends object>(
   location: string,
   base?: Class<T>,
-): ControllerClass<T> | ControllerClass {
+): ControllerClass<T> | ControllerClass<object> {
   if (!base) {
     return Object.assign(class {}, { location, extend });
   }
