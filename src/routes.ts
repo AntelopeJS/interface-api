@@ -78,10 +78,16 @@ function handlerSegment(key: PropertyKey): string | number {
 export function ProcessCallback(
   target: any,
   key: PropertyKey,
-  descriptor: PropertyDescriptor,
+  descriptor: TypedPropertyDescriptor<RouteHandler["callback"]>,
   ...route: RouteArguments
 ) {
   const [mode, method, location, priority] = route;
+  const callback = descriptor.value;
+  if (callback === undefined) {
+    throw new TypeError(
+      `Route decorators apply to methods; ${String(key)} has no value`,
+    );
+  }
   const meta = GetMetadata(target.constructor, ControllerMeta);
   const fullLocation =
     `${meta.location}/${location ?? handlerSegment(key)}`.replace(/\/+/g, "/");
@@ -91,7 +97,7 @@ export function ProcessCallback(
       mode,
       method,
       location: fullLocation,
-      callback: descriptor.value,
+      callback,
       parameters: meta.getParameterArray(key),
       properties: meta.computed_props,
       proto: target,
