@@ -7,6 +7,22 @@ import { isString } from "./guards";
 const SERVER_ERROR_BODY_LOG_LIMIT = 2048;
 
 /**
+ * A response body: a string, sent as is, or a value `JSON.stringify` writes as JSON.
+ *
+ * Objects take a string index signature, so a value typed by an `interface`
+ * is accepted only once spread (`{ ...value }`) or typed by a type alias.
+ * Values with a `toJSON` method (`Date`, `Buffer`) are written through it.
+ */
+export type HTTPBody =
+  | string
+  | number
+  | boolean
+  | null
+  | readonly HTTPBody[]
+  | { readonly [key: string]: HTTPBody | undefined }
+  | { toJSON(): HTTPBody };
+
+/**
  * Result object of an API call.
  *
  * This object contains the status, body & content type, and additional headers.
@@ -31,7 +47,7 @@ export class HTTPResult {
    * @returns New HTTPResult with the specified headers
    */
   public static withHeaders(
-    res: any,
+    res: HTTPResult | HTTPBody | undefined,
     headers: Record<string, string>,
     defaultStatus = 200,
   ) {
@@ -48,7 +64,7 @@ export class HTTPResult {
    * @param body Response body
    * @param type Content type
    */
-  public constructor(status = 200, body?: unknown, type?: string) {
+  public constructor(status = 200, body?: HTTPBody, type?: string) {
     this.setBody(body, type);
     this.setStatus(status);
   }
@@ -74,10 +90,10 @@ export class HTTPResult {
   /**
    * Set the body of the response and its content type.
    *
-   * @param body Body string or object
+   * @param body Body string, sent as is, or value written as JSON
    * @param type Content type
    */
-  public setBody(body: any, type?: string) {
+  public setBody(body: HTTPBody | undefined, type?: string) {
     if (body === undefined || isString(body)) {
       this.body = isString(body) ? body : "";
       this.contentType = type ?? "text/plain";
@@ -90,9 +106,9 @@ export class HTTPResult {
   /**
    * Get the body of the response.
    *
-   * @returns Body
+   * @returns Body as sent: the string given, or the JSON text of the value given
    */
-  public getBody(): any {
+  public getBody(): string {
     return this.body;
   }
 

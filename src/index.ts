@@ -17,6 +17,7 @@ export type {
   RequestContext,
 } from "./controller";
 export type { AllowedOrigin, CorsConfig } from "./proxies";
+export type { HTTPBody } from "./http-result";
 export type {
   RegisteredRouteHandler,
   RouteHandler,
