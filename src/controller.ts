@@ -183,18 +183,19 @@ export class ControllerMeta {
    */
   getComputedParameter(key: PropertyKey, param: number | undefined) {
     if (param === undefined) {
-      if (!(key in this.computed_props)) {
+      if (!Object.hasOwn(this.computed_props, key)) {
         this.computed_props[key] = { modifiers: [] };
       }
       return this.computed_props[key];
     } else {
-      if (!(key in this.computed_params)) {
+      if (!Object.hasOwn(this.computed_params, key)) {
         this.computed_params[key] = [];
       }
-      if (!(param in this.computed_params[key])) {
-        this.computed_params[key][param] = { modifiers: [] };
+      const params = this.computed_params[key];
+      if (!Object.hasOwn(params, param)) {
+        params[param] = { modifiers: [] };
       }
-      return this.computed_params[key][param];
+      return params[param];
     }
   }
 
@@ -235,13 +236,15 @@ export class ControllerMeta {
    * @returns ComputedParameter list
    */
   getParameterArray(key: PropertyKey) {
-    const paramsMap = this.computed_params[key] || {};
+    const paramsMap = Object.hasOwn(this.computed_params, key)
+      ? this.computed_params[key]
+      : {};
     const paramsMax = Object.keys(paramsMap)
       .map((val) => parseInt(val, 10))
       .reduce((a, b) => Math.max(a, b), 0);
     const params = [];
     for (let i = 0; i <= paramsMax; ++i) {
-      params[i] = i in paramsMap ? paramsMap[i] : null;
+      params[i] = Object.hasOwn(paramsMap, i) ? paramsMap[i] : null;
     }
     return params;
   }
