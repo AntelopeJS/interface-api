@@ -1,10 +1,9 @@
-import type { Class } from "@antelopejs/interface-core/decorators";
 import {
   InterfaceFunction,
   RegisteringProxy,
 } from "@antelopejs/interface-core";
 
-import type { RequestContext } from "./controller";
+import type { ControllerClass, RequestContext } from "./controller";
 import { RoutesProxy, type RouteHandler } from "./route-registry";
 
 export const internalRoutesProxy = new RegisteringProxy<
@@ -19,10 +18,9 @@ export const internalRoutesProxy = new RegisteringProxy<
  * @returns Controller instance
  */
 export const GetControllerInstance: <T>(
-  cl: Class<T>,
+  cl: ControllerClass<T>,
   context: RequestContext,
-) => Promise<T> =
-  InterfaceFunction<(cl: any, context: RequestContext) => any>();
+) => Promise<T> = InterfaceFunction();
 
 /**
  * Start listening on all configured servers.
