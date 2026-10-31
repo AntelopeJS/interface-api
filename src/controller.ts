@@ -117,13 +117,13 @@ export interface ComputedParameter {
  *
  * @param context Request context
  * @param param Computed parameter chain
- * @param obj this Object for provider/modifier calls
+ * @param obj Controller instance, the `this` of provider and modifier calls
  * @returns Result
  */
 export async function computeParameter(
   context: RequestContext,
   param: ComputedParameter | null,
-  obj: unknown,
+  obj: InstanceType<ControllerClass>,
 ) {
   if (!param || !param.provider) {
     return undefined;
@@ -257,21 +257,26 @@ export class ControllerMeta {
  * @param base Optional base Controller to inherit properties from
  * @returns New Controller
  */
-export function Controller<T extends object = object>(
+export function Controller(location: string): ControllerClass<object>;
+export function Controller<T extends object>(
+  location: string,
+  base: Class<T>,
+): ControllerClass<T>;
+export function Controller<T extends object>(
   location: string,
   base?: Class<T>,
-): ControllerClass<T> {
-  const c: any = base ? class extends base {} : class {};
+): ControllerClass<T> | ControllerClass<object> {
+  if (!base) {
+    return Object.assign(class {}, { location, extend });
+  }
+  return Object.assign(class extends base {}, { location, extend });
+}
 
-  c.location = location;
-  c.extend = function (
-    this: Class<T> & { location: string },
-    location: string,
-  ) {
-    return Controller(`${this.location}/${location}`, this);
-  };
-
-  return c;
+function extend<E extends ControllerClass>(this: E, location: string): E {
+  return Object.assign(class extends this {}, {
+    location: `${this.location}/${location}`,
+    extend,
+  });
 }
 
 /**
