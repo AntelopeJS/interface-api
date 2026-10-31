@@ -17,7 +17,7 @@ export const internalRoutesProxy = new RegisteringProxy<
  * @param context Request context
  * @returns Controller instance
  */
-export const GetControllerInstance: <T>(
+export const GetControllerInstance: <T extends object>(
   cl: ControllerClass<T>,
   context: RequestContext,
 ) => Promise<T> = InterfaceFunction();
