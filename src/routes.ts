@@ -21,8 +21,14 @@ let nextId = 0;
  *
  * @param handler Route handler
  * @returns New route ID
+ * @throws {TypeError} When the handler names no {@link RouteHandler.controller}
  */
 export function RegisterRoute(handler: RouteHandler) {
+  if (!handler.controller) {
+    throw new TypeError(
+      `Cannot register ${handler.method.toUpperCase()} ${handler.location}: RouteHandler.controller is required`,
+    );
+  }
   const id = nextId++;
   const enriched: RouteHandler = { ...handler, module: GetResponsibleModule() };
   Logging.Debug(
