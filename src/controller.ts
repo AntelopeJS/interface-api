@@ -3,7 +3,7 @@ import type { Class } from "@antelopejs/interface-core/decorators";
 
 import type { HTTPResult } from "./http-result";
 
-export type ControllerClass<T = Record<string, any>> = Class<T> & {
+export type ControllerClass<T = object> = Class<T> & {
   /**
    * Create a sub-controller at the given sub-location.
    *
