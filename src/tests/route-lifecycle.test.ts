@@ -7,6 +7,7 @@ import {
   getRegisteredRouteHandlers,
   getRegisteredRoutes,
   HandlerPriority,
+  type LegacyRouteHandler,
   RegisterRoute,
   type RouteHandler,
   routesProxy,
@@ -32,6 +33,18 @@ function handlerAt(location: string): RouteHandler {
     parameters: [],
     properties: {},
     controller: LifecycleController,
+    callback: async () => new Response(),
+  };
+}
+
+function legacyHandlerAt(location: string): LegacyRouteHandler {
+  return {
+    location,
+    method: "GET",
+    mode: "handler",
+    parameters: [],
+    properties: {},
+    proto: LifecycleController.prototype,
     callback: async () => new Response(),
   };
 }
@@ -243,5 +256,90 @@ describe("getRegisteredRouteHandlers", () => {
       false,
     );
     assert.equal(routesAt("/handlers/module-unload"), 0);
+  });
+});
+
+describe("RegisterRoute with a handler registered the 0.2 way", () => {
+  const routeIds: number[] = [];
+
+  function registerLegacy(handler: LegacyRouteHandler): number {
+    const id = RegisterRoute(handler);
+    routeIds.push(id);
+    return id;
+  }
+
+  afterEach(() => {
+    for (const id of routeIds.splice(0)) {
+      UnregisterRoute(id);
+    }
+  });
+
+  it("takes the controller from the proto of a handler registered the 0.2 way", () => {
+    const id = registerLegacy(legacyHandlerAt("/handlers/legacy"));
+
+    const registered = getRegisteredRouteHandlers().find(
+      (route) => route.id === id.toString(),
+    );
+
+    assert.strictEqual(registered?.handler.controller, LifecycleController);
+    assert.strictEqual(
+      registered?.handler.proto,
+      LifecycleController.prototype,
+    );
+    assert.equal(registered?.handler.location, "/handlers/legacy");
+  });
+
+  it("registers a proto-only handler whose proto is a plain object, as @antelopejs/dms-automation 0.7.0 registers its webhook", () => {
+    const id = registerLegacy({
+      ...legacyHandlerAt("/handlers/plain-proto"),
+      method: "POST",
+      proto: {},
+    });
+
+    const registered = getRegisteredRouteHandlers().find(
+      (route) => route.id === id.toString(),
+    );
+
+    assert.strictEqual(registered?.handler.controller, Object);
+    assert.ok(
+      registered !== undefined &&
+        !("location" in registered.handler.controller),
+    );
+    assert.equal(routesAt("/handlers/plain-proto"), 1);
+  });
+
+  it("registers a proto-only handler whose proto is a class's that does not extend Controller", () => {
+    class PlainClass {}
+    const id = registerLegacy({
+      ...legacyHandlerAt("/handlers/plain-class"),
+      proto: PlainClass.prototype,
+    });
+
+    const registered = getRegisteredRouteHandlers().find(
+      (route) => route.id === id.toString(),
+    );
+
+    assert.strictEqual(registered?.handler.controller, PlainClass);
+  });
+
+  it("rejects a proto-only handler whose proto names no constructor with a prototype", () => {
+    const arrow = () => ({});
+    const bare = { __proto__: null };
+
+    for (const proto of [bare, { constructor: arrow }]) {
+      assert.throws(
+        () =>
+          registerLegacy({
+            ...legacyHandlerAt("/handlers/no-constructor"),
+            proto,
+          }),
+        {
+          name: "TypeError",
+          message:
+            "Cannot register GET /handlers/no-constructor: it names no controller, and its proto has no constructor with a prototype",
+        },
+      );
+    }
+    assert.equal(routesAt("/handlers/no-constructor"), 0);
   });
 });

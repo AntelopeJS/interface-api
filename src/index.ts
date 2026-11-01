@@ -18,6 +18,8 @@ export type {
 } from "./controller";
 export type { AllowedOrigin, CorsConfig } from "./proxies";
 export type {
+  LegacyController,
+  LegacyRouteHandler,
   RegisteredRouteHandler,
   RouteHandler,
   RouteHandlerMode,

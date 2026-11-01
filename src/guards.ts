@@ -1,3 +1,5 @@
+import type { LegacyController } from "./route-registry";
+
 /**
  * Whether a value is a string.
  *
@@ -26,4 +28,19 @@ export function isSymbol(key: PropertyKey): key is symbol {
  */
 export function isObject(value: unknown): value is object {
   return typeof value === "object" && value !== null;
+}
+
+/**
+ * Whether a value is a constructor with an object `prototype`: what a handler
+ * registered the 0.2 way needs from its `proto.constructor`.
+ *
+ * @param value Value to test
+ * @returns True when the value is a {@link LegacyController}
+ */
+export function isLegacyController(value: unknown): value is LegacyController {
+  return (
+    typeof value === "function" &&
+    "prototype" in value &&
+    isObject(value.prototype)
+  );
 }

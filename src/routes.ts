@@ -1,11 +1,13 @@
 import { Logging } from "@antelopejs/interface-core/logging";
 import { GetMetadata, GetResponsibleModule } from "@antelopejs/interface-core";
 
-import { isObject, isSymbol } from "./guards";
+import { isLegacyController, isObject, isSymbol } from "./guards";
 import { routesProxy } from "./proxies";
-import { ControllerMeta } from "./controller";
+import { ControllerMeta, type ControllerClass } from "./controller";
 import {
   type HandlerPriority,
+  type LegacyController,
+  type LegacyRouteHandler,
   type RouteHandler,
   type RouteHandlerMode,
   routesList,
@@ -13,21 +15,41 @@ import {
 
 let nextId = 0;
 
+function controllerOf(
+  handler: RouteHandler | LegacyRouteHandler,
+): ControllerClass | LegacyController {
+  if (handler.controller !== undefined) {
+    return handler.controller;
+  }
+  const declared: unknown = handler.proto.constructor;
+  if (!isLegacyController(declared)) {
+    throw new TypeError(
+      `Cannot register ${handler.method.toUpperCase()} ${handler.location}: it names no controller, and its proto has no constructor with a prototype`,
+    );
+  }
+  return declared;
+}
+
 /**
  * Register a RouteHandler to the API.
  *
  * Registers a copy that carries {@link RouteHandler.module} and, unless the
  * handler gives its own, the deprecated {@link RouteHandler.proto}; the given
- * handler is not modified.
+ * handler is not modified. A handler that names only its `proto`, as an
+ * implementation built against interface-api 0.2 or earlier registers it, gets
+ * its {@link RouteHandler.controller} from `proto.constructor`; it is refused
+ * with a TypeError when that is not a constructor with an object `prototype`.
  *
  * @param handler Route handler
  * @returns New route ID
  */
-export function RegisterRoute(handler: RouteHandler) {
+export function RegisterRoute(handler: RouteHandler | LegacyRouteHandler) {
+  const controller = controllerOf(handler);
   const id = nextId++;
-  const prototype: unknown = handler.controller.prototype;
+  const prototype: unknown = controller.prototype;
   const enriched: RouteHandler = {
     ...handler,
+    controller,
     proto: handler.proto ?? (isObject(prototype) ? prototype : undefined),
     module: GetResponsibleModule(),
   };
