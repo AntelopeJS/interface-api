@@ -90,9 +90,9 @@ export class HTTPResult {
   /**
    * Get the body of the response.
    *
-   * @returns Body
+   * @returns Body text: the string given, or the JSON text of any other body
    */
-  public getBody(): any {
+  public getBody(): string {
     return this.body;
   }
 

@@ -25,6 +25,17 @@ describe("HTTPResult response contract", () => {
     assert.equal(result.getContentType(), "application/json");
   });
 
+  it("Answers its body as a string, whatever body it was given", () => {
+    const texts: string[] = [
+      new LocalHTTPResult(200, "plain").getBody(),
+      new LocalHTTPResult(200, { id: 1 }).getBody(),
+      new LocalHTTPResult(200, null).getBody(),
+      new LocalHTTPResult().getBody(),
+    ];
+
+    assert.deepEqual(texts, ["plain", '{"id":1}', "null", ""]);
+  });
+
   it("Peeks at headers without creating the mutable store", () => {
     const result = new LocalHTTPResult();
 

@@ -2,6 +2,8 @@ import assert from "node:assert";
 
 import {
   type ComputedParameter,
+  Controller,
+  Get,
   getRegisteredRouteHandlers,
   getRegisteredRoutes,
   HandlerPriority,
@@ -20,6 +22,8 @@ interface ProxyCall {
 
 const proxyCalls: ProxyCall[] = [];
 
+class LifecycleController extends Controller("/lifecycle") {}
+
 function handlerAt(location: string): RouteHandler {
   return {
     location,
@@ -27,7 +31,7 @@ function handlerAt(location: string): RouteHandler {
     mode: "handler",
     parameters: [],
     properties: {},
-    proto: {},
+    controller: LifecycleController,
     callback: async () => new Response(),
   };
 }
@@ -43,7 +47,7 @@ function completeHandlerAt(location: string): RouteHandler {
     mode: "prefix",
     parameters: [parameter, null],
     properties: { property: parameter },
-    proto: { controller: location },
+    controller: LifecycleController,
     callback: function completeRouteCallback() {
       return location;
     },
@@ -156,7 +160,8 @@ describe("getRegisteredRouteHandlers", () => {
     assert.equal(handler.mode, original.mode);
     assert.equal(handler.priority, original.priority);
     assert.equal(handler.callback(), original.location);
-    assert.deepEqual(handler.proto, original.proto);
+    assert.strictEqual(handler.controller, original.controller);
+    assert.strictEqual(handler.proto, original.controller.prototype);
     assert.equal(handler.parameters.length, 2);
     assert.equal(handler.parameters[1], null);
     assert.equal(providedValueOf(handler.parameters[0]), "parameter");
@@ -174,6 +179,39 @@ describe("getRegisteredRouteHandlers", () => {
       stableFieldsOf(handler),
     );
     assert.equal(Object.hasOwn(original, "module"), false);
+  });
+
+  it("keeps a proto the caller gives", () => {
+    const given = { given: true };
+    const id = register({ ...handlerAt("/handlers/given"), proto: given });
+
+    const registered = getRegisteredRouteHandlers().find(
+      (route) => route.id === id.toString(),
+    );
+
+    assert.strictEqual(registered?.handler.proto, given);
+  });
+
+  it("registers a decorated route with the class that declares it", () => {
+    class DeclaringController extends Controller("/lifecycle/declared") {
+      @Get("route")
+      route() {
+        return "declared";
+      }
+    }
+
+    const registered = getRegisteredRouteHandlers().find(
+      ({ handler }) => handler.location === "/lifecycle/declared/route",
+    );
+
+    assert(registered);
+    assert.strictEqual(registered.handler.controller, DeclaringController);
+    assert.strictEqual(
+      registered.handler.proto,
+      DeclaringController.prototype,
+      "The deprecated proto stays the controller's prototype for older implementations",
+    );
+    UnregisterRoute(Number(registered.id));
   });
 
   it("excludes explicitly unregistered routes", () => {

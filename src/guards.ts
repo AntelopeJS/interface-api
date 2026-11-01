@@ -17,3 +17,13 @@ export function isString(value: unknown): value is string {
 export function isSymbol(key: PropertyKey): key is symbol {
   return typeof key === "symbol";
 }
+
+/**
+ * Whether a value is an object (a function is not one here).
+ *
+ * @param value Value to test
+ * @returns True when the value is a non-null object
+ */
+export function isObject(value: unknown): value is object {
+  return typeof value === "object" && value !== null;
+}
