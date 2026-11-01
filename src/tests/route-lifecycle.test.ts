@@ -7,6 +7,7 @@ import {
   getRegisteredRouteHandlers,
   getRegisteredRoutes,
   HandlerPriority,
+  type LegacyRouteHandler,
   RegisterRoute,
   type RouteHandler,
   routesProxy,
@@ -32,6 +33,18 @@ function handlerAt(location: string): RouteHandler {
     parameters: [],
     properties: {},
     controller: LifecycleController,
+    callback: async () => new Response(),
+  };
+}
+
+function legacyHandlerAt(location: string): LegacyRouteHandler {
+  return {
+    location,
+    method: "GET",
+    mode: "handler",
+    parameters: [],
+    properties: {},
+    proto: LifecycleController.prototype,
     callback: async () => new Response(),
   };
 }
@@ -243,5 +256,50 @@ describe("getRegisteredRouteHandlers", () => {
       false,
     );
     assert.equal(routesAt("/handlers/module-unload"), 0);
+  });
+});
+
+describe("RegisterRoute with a handler registered the 0.2 way", () => {
+  const routeIds: number[] = [];
+
+  function registerLegacy(handler: LegacyRouteHandler): number {
+    const id = RegisterRoute(handler);
+    routeIds.push(id);
+    return id;
+  }
+
+  afterEach(() => {
+    for (const id of routeIds.splice(0)) {
+      UnregisterRoute(id);
+    }
+  });
+
+  it("takes the controller from the proto of a handler registered the 0.2 way", () => {
+    const id = registerLegacy(legacyHandlerAt("/handlers/legacy"));
+
+    const registered = getRegisteredRouteHandlers().find(
+      (route) => route.id === id.toString(),
+    );
+
+    assert.strictEqual(registered?.handler.controller, LifecycleController);
+    assert.strictEqual(
+      registered?.handler.proto,
+      LifecycleController.prototype,
+    );
+    assert.equal(registered?.handler.location, "/handlers/legacy");
+  });
+
+  it("rejects a proto-only handler whose proto is not a controller's", () => {
+    class NotAController {}
+
+    assert.throws(
+      () =>
+        registerLegacy({
+          ...legacyHandlerAt("/handlers/not-a-controller"),
+          proto: NotAController.prototype,
+        }),
+      /controller/,
+    );
+    assert.equal(routesAt("/handlers/not-a-controller"), 0);
   });
 });

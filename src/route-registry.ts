@@ -96,6 +96,26 @@ export interface RouteHandler {
 }
 
 /**
+ * Route handler as an implementation built against interface-api 0.2 or
+ * earlier registers it: it names the prototype of its controller and no
+ * {@link RouteHandler.controller}. {@link RegisterRoute} takes the controller
+ * from `proto.constructor`.
+ *
+ * @deprecated Register a {@link RouteHandler} with its `controller`.
+ */
+export interface LegacyRouteHandler extends Omit<
+  RouteHandler,
+  "controller" | "proto"
+> {
+  controller?: undefined;
+
+  /**
+   * Prototype of the controller class that declares the handler.
+   */
+  proto: object;
+}
+
+/**
  * Complete registered route handler and its identifier.
  */
 export interface RegisteredRouteHandler {

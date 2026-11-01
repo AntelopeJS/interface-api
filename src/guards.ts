@@ -1,3 +1,5 @@
+import type { ControllerClass } from "./controller";
+
 /**
  * Whether a value is a string.
  *
@@ -26,4 +28,23 @@ export function isSymbol(key: PropertyKey): key is symbol {
  */
 export function isObject(value: unknown): value is object {
   return typeof value === "object" && value !== null;
+}
+
+/**
+ * Whether a value is a controller class: a constructor that carries the
+ * `location` string and the `extend` method {@link Controller} gives it.
+ *
+ * @param value Value to test
+ * @returns True when the value is a controller class
+ */
+export function isControllerClass(value: unknown): value is ControllerClass {
+  return (
+    typeof value === "function" &&
+    "prototype" in value &&
+    isObject(value.prototype) &&
+    "location" in value &&
+    isString(value.location) &&
+    "extend" in value &&
+    typeof value.extend === "function"
+  );
 }
