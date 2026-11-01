@@ -114,6 +114,25 @@ describe("Route lifecycle", () => {
     assert.equal(routesAt("/lifecycle/bystander"), 0);
   });
 
+  it("refuses a handler that names no controller and registers nothing", () => {
+    const handler = handlerAt("/lifecycle/no-controller");
+    // @ts-expect-error off-contract handler without its required controller; RegisterRoute must throw a TypeError at registration
+    delete handler.controller;
+    const before = getRegisteredRoutes().length;
+
+    assert.throws(
+      () => RegisterRoute(handler),
+      (error) =>
+        error instanceof TypeError &&
+        error.message.includes("GET") &&
+        error.message.includes("/lifecycle/no-controller") &&
+        error.message.includes("controller"),
+    );
+
+    assert.equal(getRegisteredRoutes().length, before);
+    assert.deepEqual(proxyCalls, []);
+  });
+
   it("tolerates unregistering the same id twice", () => {
     const id = RegisterRoute(handlerAt("/lifecycle/twice"));
     UnregisterRoute(id);
