@@ -36,6 +36,36 @@ describe("HTTPResult response contract", () => {
     assert.deepEqual(texts, ["plain", '{"id":1}', "null", ""]);
   });
 
+  it("Writes a body with a toJSON method through it", () => {
+    const result = new LocalHTTPResult(200, {
+      at: new Date(0),
+      list: [1, "two", false, null],
+    });
+
+    assert.equal(
+      result.getBody(),
+      '{"at":"1970-01-01T00:00:00.000Z","list":[1,"two",false,null]}',
+    );
+  });
+
+  it("Wraps a body with headers, or adds them to a result", () => {
+    const wrapped = LocalHTTPResult.withHeaders(
+      { ok: true },
+      { "X-A": "a" },
+      201,
+    );
+    const existing = new LocalHTTPResult(202, "text");
+
+    assert.equal(wrapped.getStatus(), 201);
+    assert.equal(wrapped.getBody(), '{"ok":true}');
+    assert.equal(wrapped.getHeaders()["X-A"], "a");
+    assert.strictEqual(
+      LocalHTTPResult.withHeaders(existing, { "X-B": "b" }),
+      existing,
+    );
+    assert.equal(existing.getHeaders()["X-B"], "b");
+  });
+
   it("Peeks at headers without creating the mutable store", () => {
     const result = new LocalHTTPResult();
 
