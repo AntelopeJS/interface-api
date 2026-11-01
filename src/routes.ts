@@ -1,11 +1,12 @@
 import { Logging } from "@antelopejs/interface-core/logging";
 import { GetMetadata, GetResponsibleModule } from "@antelopejs/interface-core";
 
-import { isControllerClass, isObject, isSymbol } from "./guards";
+import { isLegacyController, isObject, isSymbol } from "./guards";
 import { routesProxy } from "./proxies";
 import { ControllerMeta, type ControllerClass } from "./controller";
 import {
   type HandlerPriority,
+  type LegacyController,
   type LegacyRouteHandler,
   type RouteHandler,
   type RouteHandlerMode,
@@ -16,14 +17,14 @@ let nextId = 0;
 
 function controllerOf(
   handler: RouteHandler | LegacyRouteHandler,
-): ControllerClass {
+): ControllerClass | LegacyController {
   if (handler.controller !== undefined) {
     return handler.controller;
   }
   const declared: unknown = handler.proto.constructor;
-  if (!isControllerClass(declared)) {
+  if (!isLegacyController(declared)) {
     throw new TypeError(
-      `Cannot register ${handler.method.toUpperCase()} ${handler.location}: it names no controller, and its proto is not the prototype of a controller class`,
+      `Cannot register ${handler.method.toUpperCase()} ${handler.location}: it names no controller, and its proto has no constructor with a prototype`,
     );
   }
   return declared;
@@ -37,7 +38,7 @@ function controllerOf(
  * handler is not modified. A handler that names only its `proto`, as an
  * implementation built against interface-api 0.2 or earlier registers it, gets
  * its {@link RouteHandler.controller} from `proto.constructor`; it is refused
- * with a TypeError when that is not a controller class.
+ * with a TypeError when that is not a constructor with an object `prototype`.
  *
  * @param handler Route handler
  * @returns New route ID

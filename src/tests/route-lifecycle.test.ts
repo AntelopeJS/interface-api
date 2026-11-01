@@ -289,17 +289,57 @@ describe("RegisterRoute with a handler registered the 0.2 way", () => {
     assert.equal(registered?.handler.location, "/handlers/legacy");
   });
 
-  it("rejects a proto-only handler whose proto is not a controller's", () => {
-    class NotAController {}
+  it("registers a proto-only handler whose proto is a plain object, as @antelopejs/dms-automation 0.7.0 registers its webhook", () => {
+    const id = registerLegacy({
+      ...legacyHandlerAt("/handlers/plain-proto"),
+      method: "POST",
+      proto: {},
+    });
 
-    assert.throws(
-      () =>
-        registerLegacy({
-          ...legacyHandlerAt("/handlers/not-a-controller"),
-          proto: NotAController.prototype,
-        }),
-      /controller/,
+    const registered = getRegisteredRouteHandlers().find(
+      (route) => route.id === id.toString(),
     );
-    assert.equal(routesAt("/handlers/not-a-controller"), 0);
+
+    assert.strictEqual(registered?.handler.controller, Object);
+    assert.ok(
+      registered !== undefined &&
+        !("location" in registered.handler.controller),
+    );
+    assert.equal(routesAt("/handlers/plain-proto"), 1);
+  });
+
+  it("registers a proto-only handler whose proto is a class's that does not extend Controller", () => {
+    class PlainClass {}
+    const id = registerLegacy({
+      ...legacyHandlerAt("/handlers/plain-class"),
+      proto: PlainClass.prototype,
+    });
+
+    const registered = getRegisteredRouteHandlers().find(
+      (route) => route.id === id.toString(),
+    );
+
+    assert.strictEqual(registered?.handler.controller, PlainClass);
+  });
+
+  it("rejects a proto-only handler whose proto names no constructor with a prototype", () => {
+    const arrow = () => ({});
+    const bare = { __proto__: null };
+
+    for (const proto of [bare, { constructor: arrow }]) {
+      assert.throws(
+        () =>
+          registerLegacy({
+            ...legacyHandlerAt("/handlers/no-constructor"),
+            proto,
+          }),
+        {
+          name: "TypeError",
+          message:
+            "Cannot register GET /handlers/no-constructor: it names no controller, and its proto has no constructor with a prototype",
+        },
+      );
+    }
+    assert.equal(routesAt("/handlers/no-constructor"), 0);
   });
 });

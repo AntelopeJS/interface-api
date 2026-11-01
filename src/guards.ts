@@ -1,4 +1,4 @@
-import type { ControllerClass } from "./controller";
+import type { LegacyController } from "./route-registry";
 
 /**
  * Whether a value is a string.
@@ -31,20 +31,16 @@ export function isObject(value: unknown): value is object {
 }
 
 /**
- * Whether a value is a controller class: a constructor that carries the
- * `location` string and the `extend` method {@link Controller} gives it.
+ * Whether a value is a constructor with an object `prototype`: what a handler
+ * registered the 0.2 way needs from its `proto.constructor`.
  *
  * @param value Value to test
- * @returns True when the value is a controller class
+ * @returns True when the value is a {@link LegacyController}
  */
-export function isControllerClass(value: unknown): value is ControllerClass {
+export function isLegacyController(value: unknown): value is LegacyController {
   return (
     typeof value === "function" &&
     "prototype" in value &&
-    isObject(value.prototype) &&
-    "location" in value &&
-    isString(value.location) &&
-    "extend" in value &&
-    typeof value.extend === "function"
+    isObject(value.prototype)
   );
 }
