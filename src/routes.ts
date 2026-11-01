@@ -1,7 +1,7 @@
 import { Logging } from "@antelopejs/interface-core/logging";
 import { GetMetadata, GetResponsibleModule } from "@antelopejs/interface-core";
 
-import { isSymbol } from "./guards";
+import { isObject, isSymbol } from "./guards";
 import { routesProxy } from "./proxies";
 import { ControllerMeta } from "./controller";
 import {
@@ -16,15 +16,21 @@ let nextId = 0;
 /**
  * Register a RouteHandler to the API.
  *
- * Registers a copy that carries {@link RouteHandler.module}; the given handler
- * is not modified.
+ * Registers a copy that carries {@link RouteHandler.module} and, unless the
+ * handler gives its own, the deprecated {@link RouteHandler.proto}; the given
+ * handler is not modified.
  *
  * @param handler Route handler
  * @returns New route ID
  */
 export function RegisterRoute(handler: RouteHandler) {
   const id = nextId++;
-  const enriched: RouteHandler = { ...handler, module: GetResponsibleModule() };
+  const prototype: unknown = handler.controller.prototype;
+  const enriched: RouteHandler = {
+    ...handler,
+    proto: handler.proto ?? (isObject(prototype) ? prototype : undefined),
+    module: GetResponsibleModule(),
+  };
   Logging.Debug(
     `Registered ${enriched.method.toUpperCase()} ${enriched.location} (${enriched.callback.name || "anonymous"})`,
   );
@@ -100,7 +106,7 @@ export function ProcessCallback(
       callback,
       parameters: meta.getParameterArray(key),
       properties: meta.computed_props,
-      proto: target,
+      controller: target.constructor,
       priority,
     }),
   };

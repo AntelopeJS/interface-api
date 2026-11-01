@@ -1,6 +1,6 @@
 import { RegisteringProxy } from "@antelopejs/interface-core";
 
-import type { ComputedParameter } from "./controller";
+import type { ComputedParameter, ControllerClass } from "./controller";
 
 /**
  * Handler priority enum.
@@ -66,9 +66,21 @@ export interface RouteHandler {
   properties: Record<string, ComputedParameter>;
 
   /**
-   * Controller prototype.
+   * Class of the controller that declares the handler.
    */
-  proto: any;
+  controller: ControllerClass;
+
+  /**
+   * Prototype of {@link controller}. {@link RegisterRoute} sets it when the
+   * caller gives none, so an
+   * implementation built against interface-api 0.2 or earlier, which reads it,
+   * keeps resolving the controller. A caller that registers through such an
+   * older copy of this interface must pass it too, because that copy does not
+   * set it.
+   *
+   * @deprecated Read {@link controller}.
+   */
+  proto?: object;
 
   /**
    * Handler priority.
