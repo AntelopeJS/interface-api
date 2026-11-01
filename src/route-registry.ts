@@ -66,24 +66,9 @@ export interface RouteHandler {
   properties: Record<string, ComputedParameter>;
 
   /**
-   * Class of the controller that declares the handler. It is a
-   * {@link LegacyController} when a handler registered the 0.2 way named only a
-   * `proto` whose constructor is not a {@link ControllerClass}; a reader checks
-   * for `location` before it uses it.
+   * Class of the controller that declares the handler.
    */
-  controller: ControllerClass | LegacyController;
-
-  /**
-   * Prototype of {@link controller}. {@link RegisterRoute} sets it when the
-   * caller gives none, so an
-   * implementation built against interface-api 0.2 or earlier, which reads it,
-   * keeps resolving the controller. A caller that registers through such an
-   * older copy of this interface must pass it too, because that copy does not
-   * set it.
-   *
-   * @deprecated Read {@link controller}.
-   */
-  proto?: object;
+  controller: ControllerClass;
 
   /**
    * Handler priority.
@@ -96,38 +81,6 @@ export interface RouteHandler {
    * the responsible module cannot be determined.
    */
   module?: string;
-}
-
-/**
- * Constructor that a handler registered the 0.2 way names through
- * `proto.constructor` when it is no {@link ControllerClass}: it builds an
- * object with no arguments and has an object `prototype`, and nothing more
- * (no `location`, no `extend`).
- */
-export interface LegacyController {
-  new (): object;
-  readonly prototype: object;
-}
-
-/**
- * Route handler as an implementation built against interface-api 0.2 or
- * earlier registers it: it names the prototype of its controller and no
- * {@link RouteHandler.controller}. {@link RegisterRoute} takes the controller
- * from `proto.constructor`, which may be any constructor with an object
- * `prototype`.
- *
- * @deprecated Register a {@link RouteHandler} with its `controller`.
- */
-export interface LegacyRouteHandler extends Omit<
-  RouteHandler,
-  "controller" | "proto"
-> {
-  controller?: undefined;
-
-  /**
-   * Prototype of the controller class that declares the handler.
-   */
-  proto: object;
 }
 
 /**
