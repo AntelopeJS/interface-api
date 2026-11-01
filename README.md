@@ -79,7 +79,7 @@ The module declares this peer dependency:
 
 | Package                      | Supported        | Tested with                                                |
 | ---------------------------- | ---------------- | ---------------------------------------------------------- |
-| `@antelopejs/interface-core` | `>=0.2.4 <1.0.0` | `file:.campaign/tgz/antelopejs-interface-core-6a8b526.tgz` |
+| `@antelopejs/interface-core` | `>=0.4.0 <1.0.0` | `file:.campaign/tgz/antelopejs-interface-core-f7df541.tgz` |
 
 <!-- antelopejs-docs-compat:end -->
 
