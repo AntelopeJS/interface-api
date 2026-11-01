@@ -1,9 +1,10 @@
 import { Logging } from "@antelopejs/interface-core/logging";
 import { GetMetadata, GetResponsibleModule } from "@antelopejs/interface-core";
+import type { DecoratorTarget } from "@antelopejs/interface-core/decorators";
 
 import { isSymbol } from "./guards";
 import { routesProxy } from "./proxies";
-import { ControllerMeta } from "./controller";
+import { ControllerMeta, isControllerClass } from "./controller";
 import {
   type HandlerPriority,
   type RouteHandler,
@@ -82,7 +83,7 @@ function handlerSegment(key: PropertyKey): string | number {
  * decorator's property descriptor
  */
 export function ProcessCallback(
-  target: any,
+  target: DecoratorTarget,
   key: PropertyKey,
   descriptor: TypedPropertyDescriptor<RouteHandler["callback"]>,
   ...route: RouteArguments
@@ -94,9 +95,18 @@ export function ProcessCallback(
       `Route decorators apply to methods; ${String(key)} has no value`,
     );
   }
-  const meta = GetMetadata(target.constructor, ControllerMeta);
+  const controller = target.constructor;
+  if (!isControllerClass(controller)) {
+    throw new TypeError(
+      `Route decorators apply to Controller classes; ${controller.name} has no location`,
+    );
+  }
+  const meta = GetMetadata(controller, ControllerMeta);
   const fullLocation =
-    `${meta.location}/${location ?? handlerSegment(key)}`.replace(/\/+/g, "/");
+    `${controller.location}/${location ?? handlerSegment(key)}`.replace(
+      /\/+/g,
+      "/",
+    );
 
   return {
     id: RegisterRoute({
@@ -106,7 +116,7 @@ export function ProcessCallback(
       callback,
       parameters: meta.getParameterArray(key),
       properties: meta.computed_props,
-      controller: target.constructor,
+      controller,
       priority,
     }),
   };
