@@ -1,4 +1,5 @@
 overrides:
   "@antelopejs/api>@antelopejs/interface-api": "link:."
   "@antelopejs/api>@antelopejs/interface-api-util": "file:.campaign/tgz/antelopejs-interface-api-util-b53e38a.tgz"
-  "@antelopejs/api": "file:.campaign/tgz/antelopejs-api-fb0bc81.tgz"
+  "@antelopejs/api": "file:.campaign/tgz/antelopejs-api-6afe3e2.tgz"
+  "@antelopejs/api>@antelopejs/interface-core": "0.3.0"

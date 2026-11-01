@@ -5,17 +5,18 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@antelopejs/api': file:.campaign/tgz/antelopejs-api-fb0bc81.tgz
+  '@antelopejs/api': file:.campaign/tgz/antelopejs-api-6afe3e2.tgz
   '@antelopejs/api>@antelopejs/interface-api': link:.
   '@antelopejs/api>@antelopejs/interface-api-util': file:.campaign/tgz/antelopejs-interface-api-util-b53e38a.tgz
+  '@antelopejs/api>@antelopejs/interface-core': 0.3.0
 
 importers:
 
   .:
     devDependencies:
       '@antelopejs/api':
-        specifier: file:.campaign/tgz/antelopejs-api-fb0bc81.tgz
-        version: file:.campaign/tgz/antelopejs-api-fb0bc81.tgz(@antelopejs/core@1.18.2)
+        specifier: file:.campaign/tgz/antelopejs-api-6afe3e2.tgz
+        version: file:.campaign/tgz/antelopejs-api-6afe3e2.tgz(@antelopejs/core@1.18.2)
       '@antelopejs/core':
         specifier: ^1.17.0
         version: 1.18.2
@@ -76,8 +77,8 @@ importers:
 
 packages:
 
-  '@antelopejs/api@file:.campaign/tgz/antelopejs-api-fb0bc81.tgz':
-    resolution: {integrity: sha512-tJc19CFWlYKvbxDsut9zSifD0SGZjmsrfun9yHCcQrSuwkBtJqfMEChmr0jmkfOiTO/H0Y7XzL0qtj/wFJs/Kg==, tarball: file:.campaign/tgz/antelopejs-api-fb0bc81.tgz}
+  '@antelopejs/api@file:.campaign/tgz/antelopejs-api-6afe3e2.tgz':
+    resolution: {integrity: sha512-M+L2u8CwdSJb/U/yCCqk/XXx3RmuNmYlUV//U3Z41w/05DrT79iIFViUBZhuy3gKrTOiEZVbJ5DVA0XEq1I4Ug==, tarball: file:.campaign/tgz/antelopejs-api-6afe3e2.tgz}
     version: 1.6.0
     peerDependencies:
       '@antelopejs/core': '>=1.17.0 <2'
@@ -2562,7 +2563,7 @@ packages:
 
 snapshots:
 
-  '@antelopejs/api@file:.campaign/tgz/antelopejs-api-fb0bc81.tgz(@antelopejs/core@1.18.2)':
+  '@antelopejs/api@file:.campaign/tgz/antelopejs-api-6afe3e2.tgz(@antelopejs/core@1.18.2)':
     dependencies:
       '@antelopejs/interface-api': 'link:'
       '@antelopejs/interface-api-util': file:.campaign/tgz/antelopejs-interface-api-util-b53e38a.tgz(@antelopejs/interface-api@)(@antelopejs/interface-core@0.3.0)
