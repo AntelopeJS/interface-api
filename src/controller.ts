@@ -6,7 +6,7 @@ import type {
 
 import type { HTTPResult } from "./http-result";
 
-export type ControllerClass<T = Record<string, any>> = Class<T> & {
+export type ControllerClass<T = object> = Class<T> & {
   /**
    * Create a sub-controller at the given sub-location.
    *
@@ -104,6 +104,7 @@ export type ParameterProvider<Value = unknown> = (
  */
 export type ParameterModifier<Next = unknown> = (
   context: RequestContext,
+  // oxlint-disable-next-line anti-slop/no-unknown-parameters -- modifiers enter a parameter through separate decorator calls, so the framework cannot know what the step below a stacked decorator produced, and no type connects the two
   previous: unknown,
 ) => Next;
 
