@@ -104,6 +104,7 @@ export type ParameterProvider<Value = unknown> = (
  */
 export type ParameterModifier<Next = unknown> = (
   context: RequestContext,
+  // oxlint-disable-next-line anti-slop/no-unknown-parameters -- modifiers enter a parameter through separate decorator calls, so the framework cannot know what the step below a stacked decorator produced, and no type connects the two
   previous: unknown,
 ) => Next;
 
