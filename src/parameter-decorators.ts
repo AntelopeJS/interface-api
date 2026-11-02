@@ -1,5 +1,6 @@
 import { GetMetadata } from "@antelopejs/interface-core";
 import {
+  type DecoratorTarget,
   MakeParameterAndPropertyDecorator,
   MakeParameterDecorator,
 } from "@antelopejs/interface-core/decorators";
@@ -36,7 +37,7 @@ import {
  * ```
  */
 export function SetParameterProvider(
-  target: any,
+  target: DecoratorTarget,
   key: PropertyKey,
   index: number | undefined,
   provider: ParameterProvider,
@@ -70,7 +71,7 @@ export function SetParameterProvider(
  * ```
  */
 export function AddParameterModifier(
-  target: any,
+  target: DecoratorTarget,
   key: PropertyKey,
   index: number | undefined,
   transformer: ParameterModifier,

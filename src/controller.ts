@@ -1,5 +1,8 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { Class } from "@antelopejs/interface-core/decorators";
+import type {
+  Class,
+  DecoratorTarget,
+} from "@antelopejs/interface-core/decorators";
 
 import type { HTTPResult } from "./http-result";
 
@@ -145,9 +148,10 @@ export class ControllerMeta {
   public static key = Symbol();
 
   /**
-   * Full location or the controller
+   * Full location of the controller; undefined for a class that Controller did
+   * not create, and for the prototypes GetMetadata walks above it
    */
-  public readonly location: string;
+  public readonly location: string | undefined;
 
   /**
    * Computed properties of the Controller (available to every handler)
@@ -162,8 +166,8 @@ export class ControllerMeta {
     Record<number, ComputedParameter>
   > = {};
 
-  constructor(target: { location: string }) {
-    this.location = target.location;
+  constructor(owner: DecoratorTarget) {
+    this.location = hasLocation(owner) ? owner.location : undefined;
   }
 
   inherit(parent: ControllerMeta) {
@@ -270,6 +274,24 @@ export function Controller<T extends object>(
     return Object.assign(class {}, { location, extend });
   }
   return Object.assign(class extends base {}, { location, extend });
+}
+
+function hasLocation<O extends object>(
+  owner: O,
+): owner is O & { location: string } {
+  return "location" in owner && typeof owner.location === "string";
+}
+
+/**
+ * Whether the class that built a decorated prototype is one Controller created:
+ * it carries the static `location` and `extend` that Controller assigns.
+ */
+export function isControllerClass(owner: Function): owner is ControllerClass {
+  return (
+    hasLocation(owner) &&
+    "extend" in owner &&
+    typeof owner.extend === "function"
+  );
 }
 
 function extend<E extends ControllerClass>(this: E, location: string): E {
