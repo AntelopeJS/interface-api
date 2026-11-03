@@ -1,0 +1,12 @@
+diff --git a/src/index.ts b/src/index.ts
+index 1453426..71709a3 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -39,6 +39,7 @@ export import HandlerPriority = routeRegistry.HandlerPriority;
+ export import ControllerMeta = controller.ControllerMeta;
+ export import GetControllerInstance = proxies.GetControllerInstance;
+ export import Listen = proxies.Listen;
++export import Serve = proxies.Listen;
+ export import GetCorsConfig = proxies.GetCorsConfig;
+ export import SetCorsConfig = proxies.SetCorsConfig;
+ export import routesProxy = proxies.routesProxy;

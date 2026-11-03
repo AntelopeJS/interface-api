@@ -1,0 +1,13 @@
+diff --git a/src/http-result.ts b/src/http-result.ts
+index dfb1750..ae0c95e 100644
+--- a/src/http-result.ts
++++ b/src/http-result.ts
+@@ -19,7 +19,7 @@ export type HTTPBody =
+   | boolean
+   | null
+   | readonly HTTPBody[]
+-  | { readonly [key: string]: HTTPBody | undefined }
++  | object
+   | { toJSON(): HTTPBody };
+ 
+ /**

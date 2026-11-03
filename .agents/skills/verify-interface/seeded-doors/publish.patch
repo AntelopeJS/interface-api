@@ -1,0 +1,13 @@
+diff --git a/package.json b/package.json
+index 98b36c6..e68d653 100644
+--- a/package.json
++++ b/package.json
+@@ -35,7 +35,7 @@
+     "./package.json": "./package.json"
+   },
+   "publishConfig": {
+-    "access": "public",
++    "access": "restricted",
+     "provenance": true
+   },
+   "scripts": {
