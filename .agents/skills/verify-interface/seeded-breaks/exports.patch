@@ -1,0 +1,14 @@
+diff --git a/src/index.ts b/src/index.ts
+index 1453426..bfe7d24 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -34,8 +34,8 @@ export namespace internal {
+ }
+ 
+ export import DEFAULT_REQUEST_BODY_LIMIT = body.DEFAULT_REQUEST_BODY_LIMIT;
+-export import HTTPResult = httpResult.HTTPResult;
+ export import HandlerPriority = routeRegistry.HandlerPriority;
++export import HTTPResult = httpResult.HTTPResult;
+ export import ControllerMeta = controller.ControllerMeta;
+ export import GetControllerInstance = proxies.GetControllerInstance;
+ export import Listen = proxies.Listen;

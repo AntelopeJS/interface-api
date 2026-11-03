@@ -1,0 +1,13 @@
+diff --git a/src/proxies.ts b/src/proxies.ts
+index 6aab995..17d8b58 100644
+--- a/src/proxies.ts
++++ b/src/proxies.ts
+@@ -25,7 +25,7 @@ export const GetControllerInstance: <T extends object>(
+ /**
+  * Start listening on all configured servers.
+  */
+-export const Listen: () => Promise<void> = InterfaceFunction();
++export const Listen: () => Promise<void> = async () => undefined;
+ 
+ /**
+  * Allowed CORS origin.

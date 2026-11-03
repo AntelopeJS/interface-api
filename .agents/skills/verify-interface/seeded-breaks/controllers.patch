@@ -1,0 +1,13 @@
+diff --git a/src/controller.ts b/src/controller.ts
+index 68a2b1e..147d0bb 100644
+--- a/src/controller.ts
++++ b/src/controller.ts
+@@ -297,7 +297,7 @@ export function isControllerClass(owner: Function): owner is ControllerClass {
+ 
+ function extend<E extends ControllerClass>(this: E, location: string): E {
+   return Object.assign(class extends this {}, {
+-    location: `${this.location}/${location}`,
++    location,
+     extend,
+   });
+ }
