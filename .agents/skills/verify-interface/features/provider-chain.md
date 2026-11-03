@@ -6,6 +6,7 @@ docs:
   - docs/4.parameters.md
 journeys:
   - provider-chain
+  - stacked-decorators
 ---
 
 # Provider and modifier chain
@@ -15,6 +16,7 @@ A module author builds reusable decorators with `SetParameterProvider`, `AddPara
 ## Sub-features
 
 - `provider-chain`: modifiers run in registration order with the previous value, a thrown `HTTPResult` is the outcome and later modifiers do not run, a missing provider yields undefined, the last provider set wins, providers and modifiers run with the controller instance as `this`, and an index gap leaves `null` entries.
+- `stacked-decorators`: a controller written with real legacy decorators and compiled with `experimentalDecorators` registers `@Parameter("id") @Transform(a) @Transform(b)` as one provider with the modifiers in bottom-to-top order, plus a property provider, a prefix and a monitor.
 
 ## How to get to it (user POV)
 

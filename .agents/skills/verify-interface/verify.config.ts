@@ -66,8 +66,10 @@ function scenario(title: string, id: keyof typeof SCENARIOS): Journey {
 }
 
 const PROBE_HEADER = `
-import { Controller, Get, HTTPResult, Parameter, RegisterRoute, Result, Transform } from "${"$"}{DIST}";
-import type { ComputedParameter, ControllerClass, HTTPBody, ParameterModifier, ParameterProvider, RequestContext, RouteHandler, RouteHandlerMode } from "${"$"}{DIST}";
+import type { IncomingMessage, ServerResponse } from "node:http";
+import type { PassThrough } from "node:stream";
+import { Controller, Get, GetCorsConfig, HTTPResult, Listen, Parameter, RegisterRoute, Result, SetCorsConfig, Transform, WriteStream } from "${"$"}{DIST}";
+import type { AllowedOrigin, ComputedParameter, ControllerClass, CorsConfig, HTTPBody, ParameterModifier, ParameterProvider, RequestContext, RouteHandler, RouteHandlerMode } from "${"$"}{DIST}";
 type Identical<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
 type Assert<T extends true> = T;
 `;
@@ -90,6 +92,18 @@ type Connection = Assert<Identical<RequestContext["connection"], unknown>>;
 type ErrorType = Assert<Identical<RequestContext["error"], unknown>>;
 type Body = Assert<Identical<RequestContext["body"], Promise<Buffer> | undefined>>;
 const status: number = new HTTPResult(200, body).getStatus();
+type RawRequest = Assert<Identical<RequestContext["rawRequest"], IncomingMessage>>;
+type RawResponse = Assert<Identical<RequestContext["rawResponse"], ServerResponse>>;
+type ContextUrl = Assert<Identical<RequestContext["url"], URL>>;
+type RouteParameters = Assert<Identical<RequestContext["routeParameters"], Record<string, string>>>;
+type ContextResponse = Assert<Identical<RequestContext["response"], HTTPResult>>;
+type Peek = Assert<Identical<ReturnType<HTTPResult["peekHeaders"]>, Readonly<Record<string, string>> | undefined>>;
+type CorsKeys = Assert<Identical<keyof CorsConfig, "allowedOrigins" | "allowedMethods" | "allowedHeaders" | "credentials" | "maxAge">>;
+type Origin = Assert<Identical<AllowedOrigin, string | RegExp | Array<string | RegExp>>>;
+type GetCors = Assert<Identical<typeof GetCorsConfig, () => Promise<CorsConfig>>>;
+type SetCors = Assert<Identical<typeof SetCorsConfig, (config: CorsConfig) => Promise<void>>>;
+type Listening = Assert<Identical<typeof Listen, () => Promise<void>>>;
+const emptyCors: CorsConfig = {};
 class Fine extends Controller("/fine") {
   @Get("") one(@Parameter("id") @Transform((_context, value) => value) id: string) { return id; }
 }
@@ -102,6 +116,9 @@ const REFUSED_USES = [
   "RegisterRoute({ mode: 'handler', method: 'get', location: '/x', callback: () => 1, parameters: [], properties: {} });",
   "class OnProperty { @Result() response!: HTTPResult; }",
   "const badMode: RouteHandlerMode = 'trace';",
+  "class OnWriteStream { @WriteStream() stream!: PassThrough; }",
+  "const badOrigin: AllowedOrigin = 42;",
+  "const badStatus = new HTTPResult('200');",
 ];
 
 /** Compiles probes against the packed declarations in a consumer's strict mode. */
@@ -149,6 +166,92 @@ function declared(title: string): Journey {
   };
 }
 
+
+const DECORATED_CONTROLLER = `
+import { Controller, Get, Monitor, Parameter, Prefix, Transform } from "\${DIST}";
+
+export const order: string[] = [];
+
+export class Items extends Controller("/items") {
+  @Parameter("token", "header")
+  private token?: string;
+
+  @Get(":id")
+  one(
+    @Parameter("id")
+    @Transform((_context, value) => {
+      order.push("outer");
+      return String(value) + "-outer";
+    })
+    @Transform((_context, value) => {
+      order.push("inner");
+      return String(value) + "-inner";
+    })
+    id: string,
+  ) {
+    return id;
+  }
+
+  @Prefix("get", ":id")
+  guard() {}
+
+  @Monitor("get", ":id")
+  watch() {}
+}
+`;
+
+const DECORATED_RUN = [
+  "require(process.argv[3]);",
+  "const probe = require(process.argv[3]);",
+  "const route = routeOf('one');",
+  "R.routes = a.getRegisteredRouteHandlers().map((r) => [r.handler.mode, r.handler.location, r.handler.callback.name]);",
+  "R.parameters = [route.parameters.length, await a.computeParameter(ctx(), route.parameters[0], new C())];",
+  "R.order = probe.order;",
+  "R.properties = [Object.keys(route.properties), await a.computeParameter(ctx({ rawRequest: mk([], { token: 'secret' }) }), route.properties.token, new C())];",
+].join("\n");
+
+/** Compiles a controller written with real legacy decorators and runs it against the packed interface. */
+function decorated(title: string): Journey {
+  return {
+    title,
+    entryPoint: "a TypeScript module compiled with experimentalDecorators, as docs/1.introduction.md requires",
+    async run(context) {
+      const dist = `${context.repo}/dist/index`;
+      await context.command("link the repository's dependencies", "ln", ["-s", `${context.repo}/node_modules`, `${context.work}/node_modules`]);
+      const source = `${context.work}/items.ts`;
+      context.edit("write the decorated controller", source, DECORATED_CONTROLLER.replace(/\$\{DIST\}/g, dist));
+      const compiled = await context.command("compile the decorated controller", "node", [
+        `${context.repo}/node_modules/typescript/bin/tsc`,
+        "--strict",
+        "--skipLibCheck",
+        "--experimentalDecorators",
+        "--target",
+        "es2022",
+        "--module",
+        "commonjs",
+        "--moduleResolution",
+        "node",
+        "--outDir",
+        `${context.work}/out`,
+        "--typeRoots",
+        `${context.repo}/node_modules/@types`,
+        "--types",
+        "node",
+        source,
+      ]);
+      const script = [PRELUDE, "(async () => { const R = {};", DECORATED_RUN, 'console.log(JSON.stringify(R, (key, value) => (value === undefined ? "<undefined>" : value)));', "})().catch((error) => { console.error(error); process.exit(1); });"].join("\n");
+      const runner = `${context.work}/run-items.js`;
+      context.edit("write the runner", runner, script);
+      const ran = await context.command("run the compiled controller", "node", [runner, dist + ".js", `${context.work}/out/items.js`], { timeoutMs: 60_000 });
+      context.expect(compiled.folder, [{ name: "the decorated controller compiles", pass: compiled.exitCode === 0, detail: compiled.stdout.slice(0, 400) }]);
+      context.expect(ran.folder, [
+        { name: "the runner ended cleanly", pass: ran.exitCode === 0, detail: ran.stderr.slice(-300) },
+        equal("stacked decorators register as docs/4.parameters.md states", ran.stdout.trim().split("\n").at(-1) ?? "", "EXPECTED"),
+      ]);
+    },
+  };
+}
+
 const config: VerifyConfig = {
   doors: {
     data: null,
@@ -177,13 +280,14 @@ const config: VerifyConfig = {
     "core-calls": throughCore("Listen, GetCorsConfig, SetCorsConfig and GetControllerInstance reach the provider", Object.values(WRAPPERS)),
     "cors-calls": throughCore("GetCorsConfig and SetCorsConfig reach the provider with the CORS config", [WRAPPERS.GetCorsConfig, WRAPPERS.SetCorsConfig]),
     "export-surface": scenario("the package root exports the documented names in the published order", "exports"),
-    "declared-shapes": declared("the packed declarations accept the documented shapes and refuse the documented misuse"),
+    "declared-shapes": declared("the packed declarations accept the documented uses and refuse the documented misuse"),
     "controller-hierarchy": scenario("controllers nest, extend a base and split across files as docs/2.controllers.md states", "controllers"),
     "route-locations": scenario("route decorators register the documented method, mode, location and priority", "route-locations"),
     "route-errors": scenario("route decorators refuse a class or a member the docs say they refuse", "route-errors"),
     "registry-lifecycle": scenario("RegisterRoute, UnregisterRoute and the introspection functions follow the documented lifecycle", "registry"),
     "parameter-sources": scenario("@Parameter and @MultiParameter read the route, query and header values as docs/4.parameters.md states", "sources"),
     "injected-values": scenario("@Context, @Result, @Connection, @WriteStream and @BodyStream inject what the docs state", "injected"),
+    "stacked-decorators": decorated("legacy decorators stacked on one parameter register a provider and modifiers bottom to top"),
     "provider-chain": scenario("a provider feeds its modifiers in registration order and a throw stops the chain", "chain"),
     "body-decoders": scenario("@JSONBody and @RawBody decode and limit the body as the docs state", "json-body"),
     "body-limit": scenario("ReadBody and StreamBody enforce the documented limit and streaming rules", "body-limit"),
