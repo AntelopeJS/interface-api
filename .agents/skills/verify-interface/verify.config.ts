@@ -246,7 +246,7 @@ function decorated(title: string): Journey {
       context.expect(compiled.folder, [{ name: "the decorated controller compiles", pass: compiled.exitCode === 0, detail: compiled.stdout.slice(0, 400) }]);
       context.expect(ran.folder, [
         { name: "the runner ended cleanly", pass: ran.exitCode === 0, detail: ran.stderr.slice(-300) },
-        equal("stacked decorators register as docs/4.parameters.md states", ran.stdout.trim().split("\n").at(-1) ?? "", "EXPECTED"),
+        equal("stacked decorators register as docs/4.parameters.md states", ran.stdout.trim().split("\n").at(-1) ?? "", "{\"routes\":[[\"handler\",\"/items/:id\",\"one\"],[\"prefix\",\"/items/:id\",\"guard\"],[\"monitor\",\"/items/:id\",\"watch\"]],\"parameters\":[1,\"42-inner-outer\"],\"order\":[\"inner\",\"outer\"],\"properties\":[[\"token\"],\"secret\"]}"),
       ]);
     },
   };
