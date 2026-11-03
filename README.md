@@ -1,20 +1,20 @@
-# @antelopejs/interface-api
+# `@antelopejs/interface-api`
 
 <div align="center">
-<a href="https://www.npmjs.com/package/@antelopejs/interface-api"><img alt="npm" src="https://img.shields.io/npm/v/@antelopejs/interface-api?style=for-the-badge&labelColor=000000&color=000000"></a>
-<a href="./LICENSE"><img alt="License" src="https://img.shields.io/npm/l/@antelopejs/interface-api?style=for-the-badge&labelColor=000000&color=000000"></a>
-<a href="https://discord.gg/g4pFt6eXqu"><img alt="Discord" src="https://img.shields.io/badge/Discord-18181B?logo=discord&style=for-the-badge&color=000000"></a>
-<a href="https://interfaces.antelopejs.com/docs/api"><img alt="Docs" src="https://img.shields.io/badge/Docs-18181B?style=for-the-badge&color=000000"></a>
+<a href="https://www.npmjs.com/package/@antelopejs/interface-api"><img data-illustration alt="npm" src="https://img.shields.io/npm/v/@antelopejs/interface-api?style=for-the-badge&labelColor=000000&color=000000"></a>
+<a href="./LICENSE"><img data-illustration alt="License" src="https://img.shields.io/npm/l/@antelopejs/interface-api?style=for-the-badge&labelColor=000000&color=000000"></a>
+<a href="https://discord.gg/g4pFt6eXqu"><img data-illustration alt="Discord" src="https://img.shields.io/badge/Discord-18181B?logo=discord&style=for-the-badge&color=000000"></a>
+<a href="https://interfaces.antelopejs.com/docs/api"><img data-illustration alt="Docs" src="https://img.shields.io/badge/Docs-18181B?style=for-the-badge&color=000000"></a>
 </div>
 
-The AntelopeJS contract for HTTP and WebSocket APIs: declare controllers and routes with decorators, and let the module that implements the interface serve them.
+The AntelopeJS interface for HTTP and WebSocket APIs. You declare controllers and routes with decorators, and the module that implements the interface serves them.
 
 ## What it offers
 
 - `Controller` and `PartialController` group routes under a base path, with nesting through `extend`.
-- `@Get`, `@Post`, `@Put`, `@Delete` and `@Route` map methods to endpoints; `@Prefix`, `@Postfix` and `@Monitor` run around them.
-- `@Parameter`, `@JSONBody`, `@RawBody`, `@Context` and `@WriteStream` inject request data into handler arguments.
-- `HTTPResult` sets the status, headers and body of a response.
+- `@Get`, `@Post`, `@Put`, `@Delete`, and `@Route` map methods to endpoints. `@Prefix`, `@Postfix`, and `@Monitor` run before or after them.
+- `@Parameter`, `@MultiParameter`, `@JSONBody`, `@RawBody`, `@BodyStream`, `@Context`, `@Result`, and `@WriteStream` inject request data into handler arguments. `@Transform` changes a value before the handler receives it.
+- `HTTPResult` sets the status, headers, and body of a response. The body is an `HTTPBody`, which is a string or a value that `JSON.stringify` writes as JSON.
 - `@WebsocketHandler` and `@Connection` handle WebSocket connections on the same controllers.
 
 ## Implementations
@@ -62,7 +62,7 @@ export class BookController extends Controller("/books") {
 }
 ```
 
-The decorators register the routes when the class is defined. `@antelopejs/api` serves `GET /books/:id` and `POST /books`.
+The decorators register the routes when JavaScript defines the class. `@antelopejs/api` serves `GET /books/:id` and `POST /books`.
 
 ## Documentation
 
