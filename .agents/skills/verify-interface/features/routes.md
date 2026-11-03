@@ -30,5 +30,5 @@ pnpm exec antelopejs-verify journey "$RUN" routes
 
 ## Gotchas
 
-- `@Get("")` registers the location `/users/` with a trailing slash, which the implementation matches as the controller root.
+- `docs/2.controllers.md` says `@Get("")` registers the controller root, but the registered location carries a trailing slash (`/users/`). That is a known finding (issue draft `interface-api-get-empty-location-trailing-slash.md`). The journey strips one trailing slash before comparing, so it pins neither form.
 - The symbol key case is undocumented in `docs/`; it is a check of the TypeError the code raises.
