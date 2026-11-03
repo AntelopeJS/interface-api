@@ -16,22 +16,31 @@ One file per feature. `covers:` lists the source globs it owns, `docs:` the page
 | [types](types.md) | A TypeScript author compiles against the packed declarations. | declared-shapes |
 | [smoke](smoke.md) | The fixed journeys every verdict runs. | core-calls, export-surface |
 
+## Known findings
+
+| Finding | Page | Issue |
+|---|---|---|
+| `@Get("")` registers the location `/users/` with a trailing slash, where the docs say it registers the controller root | `docs/2.controllers.md` | AntelopeJS/interface-api#75 |
+| `@Connection` is documented as valid only on a `@WebsocketHandler` handler, and nothing enforces it | `docs/4.parameters.md` | AntelopeJS/interface-api#76 |
+
+No journey pins either behaviour as correct.
+
 ## Not driven
 
-The interface holds the contract and the decorators; `@antelopejs/api` serves requests. A journey here drives the packed interface next to a stub provider or with fake requests, so these documented behaviours are not driven, each with its reason.
+The interface holds the contract and the decorators; `@antelopejs/api` serves requests. A journey here drives the packed interface next to a stub provider, with fake requests, or through real legacy decorators, so these documented behaviours are not driven, each with its reason.
 
 | Documented behaviour | Page | Why it is not driven |
 |---|---|---|
 | `GET /health` answers `{ "healthy": true }` once an implementation listens | `docs/1.introduction.md`, `README.md` | The server is the implementing module. `pnpm test` runs the repository's own suites against `@antelopejs/api`. |
-| Prefix, postfix and monitor handlers run in order and a truthy return short-circuits | `docs/2.controllers.md` | The implementation runs handlers. The journeys drive the mode, method, location and priority each decorator registers. |
-| Handler priority orders execution | `docs/2.controllers.md` | Same reason. The five priority values are driven. |
+| A prefix handler's truthy return is the response, a postfix handler's truthy return stops the later postfix handlers, a monitor's return is ignored | `docs/2.controllers.md` | The implementation runs handlers. The journeys drive the mode, method, location and priority each decorator registers. |
+| Handlers of one mode run in priority order | `docs/2.controllers.md` | Same reason. The five priority values and the priority each decorator registers are driven. |
 | `GetControllerInstance` returns the per-request instance with its computed properties set | `docs/2.controllers.md` | The implementation builds the instance. The call reaching a provider is driven with JSON stand-ins. |
 | `Listen()` starts every configured server | `docs/2.controllers.md` | The implementation owns the servers. The call reaching a provider is driven. |
-| `RegisterRoute` sets `module` to the calling module, and a module unload removes its routes | `docs/2.controllers.md` | Needs a module context that a plain `require` of the packed interface does not have. Only the case with no responsible module is driven. |
+| `RegisterRoute` sets `module` to the module that calls it | `docs/2.controllers.md` | Needs a module context that a plain `require` of the packed interface does not have. The case with no responsible module is driven, and unload pruning is driven by setting `module` on the shared handler. |
 | An implementation wraps a plain return value in an `HTTPResult` of status 200 | `docs/3.http-handling.md` | Done by the implementation. |
-| `ctx.error` holds the error thrown during processing | `docs/3.http-handling.md` | Set by the implementation. |
-| CORS headers on a response, preflight caching, reflected request headers | `docs/3.http-handling.md` | The implementation applies the config. The journeys drive the whole `CorsConfig` reaching the provider. |
-| An implementation sets class properties before each handler call, and `@Connection` carries a real WebSocket | `docs/4.parameters.md` | Done by the implementation. The computed property providers are driven. |
-| `@Connection` is only valid on a `@WebsocketHandler` handler | `docs/4.parameters.md` | Not enforced at run time. |
+| `ctx.error` holds the error thrown during processing | `docs/3.http-handling.md` | Set by the implementation. The type is driven. |
+| CORS headers on a response, preflight caching, reflected request headers, and that CORS does not replace authentication | `docs/3.http-handling.md` | The implementation applies the config. The journeys drive the whole `CorsConfig` reaching the provider and its type. |
+| An implementation sets class properties before each handler call, and `@Connection` carries a real WebSocket | `docs/4.parameters.md` | Done by the implementation. The property providers it calls are driven. |
 | Standard JavaScript decorators are unsupported | `docs/1.introduction.md` | A statement about the TypeScript compiler. The probes compile with `experimentalDecorators`. |
 | The 500 log line of `HTTPResult.sendResponse` | none | Not documented, and only observable in the log. |
+| Validating a body with API Util, and giving each parameter exactly one provider | `docs/3.http-handling.md`, `docs/4.parameters.md` | Guidance for the caller. The last provider winning is driven. |
