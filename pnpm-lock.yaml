@@ -5,23 +5,20 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@antelopejs/api': file:.campaign/tgz/antelopejs-api-6afe3e2.tgz
   '@antelopejs/api>@antelopejs/interface-api': link:.
-  '@antelopejs/api>@antelopejs/interface-api-util': file:.campaign/tgz/antelopejs-interface-api-util-b53e38a.tgz
-  '@antelopejs/interface-core': 0.4.0
 
 importers:
 
   .:
     devDependencies:
       '@antelopejs/api':
-        specifier: file:.campaign/tgz/antelopejs-api-6afe3e2.tgz
-        version: file:.campaign/tgz/antelopejs-api-6afe3e2.tgz(@antelopejs/core@1.18.2)
+        specifier: 1.7.0
+        version: 1.7.0(@antelopejs/core@1.20.0)
       '@antelopejs/core':
-        specifier: ^1.17.0
-        version: 1.18.2
+        specifier: ^1.20.0
+        version: 1.20.0
       '@antelopejs/interface-core':
-        specifier: 0.4.0
+        specifier: '>=0.4.0 <1.0.0'
         version: 0.4.0
       '@antelopejs/tooling-configs':
         specifier: ^0.2.17
@@ -77,26 +74,24 @@ importers:
 
 packages:
 
-  '@antelopejs/api@file:.campaign/tgz/antelopejs-api-6afe3e2.tgz':
-    resolution: {integrity: sha512-M+L2u8CwdSJb/U/yCCqk/XXx3RmuNmYlUV//U3Z41w/05DrT79iIFViUBZhuy3gKrTOiEZVbJ5DVA0XEq1I4Ug==, tarball: file:.campaign/tgz/antelopejs-api-6afe3e2.tgz}
-    version: 1.6.0
+  '@antelopejs/api@1.7.0':
+    resolution: {integrity: sha512-1FlpkyVc7lkqJXl+qXWPqZv46ttjj/0ZA3iwgY/KISGoORmnu46HzQKwx9fGOCB4ZMUy2esL4M3oplmdpibgNg==}
     peerDependencies:
       '@antelopejs/core': '>=1.17.0 <2'
     peerDependenciesMeta:
       '@antelopejs/core':
         optional: true
 
-  '@antelopejs/core@1.18.2':
-    resolution: {integrity: sha512-9ceeM21jBoNGvHiWi30hTdhy8al+0WKxAF5/nQqItOH3ufH29MRJhB+o6F5DQxIdGyOqQffIFqSyn+EjXuah7Q==}
-    engines: {node: '>=20.19'}
+  '@antelopejs/core@1.20.0':
+    resolution: {integrity: sha512-7clqf/n8aUi4iCwMG0G2dWLQCwzy9ZxTLHLmOIEtfObw5wuN06s0+n57Zzjr3wbIyR2wD3Q4AeorqJ94QidIfg==}
+    engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  '@antelopejs/interface-api-util@file:.campaign/tgz/antelopejs-interface-api-util-b53e38a.tgz':
-    resolution: {integrity: sha512-ESbEC9r0V3FEvbSXjfqddlZO5YgqTiaJ+xPNgUXP2oZGwK0S5Z8FdaePWRexGzSaE8RT/W+r4iazK4wZetUIew==, tarball: file:.campaign/tgz/antelopejs-interface-api-util-b53e38a.tgz}
-    version: 0.3.0
+  '@antelopejs/interface-api-util@0.3.0':
+    resolution: {integrity: sha512-9XGBY3rJk/uwJVpEuazVCeehYHtL4llCtyIT/6YAIkUK7ib0bJFGTqj74ni0KRlbH+jtPp4FU6XyUJL5SVxf+Q==}
     peerDependencies:
-      '@antelopejs/interface-api': '>=0.0.15 <1.0.0'
-      '@antelopejs/interface-core': 0.4.0
+      '@antelopejs/interface-api': '>=0.3.0 <1.0.0'
+      '@antelopejs/interface-core': '>=0.2.4 <1.0.0'
 
   '@antelopejs/interface-core@0.4.0':
     resolution: {integrity: sha512-IPX6dtt3KHknclN4mLOYeRYL2Odz1Pts+dtaZul62NghsBUX/0OFHD4Qhoaf+Beva4hjInbaF918ajr4Z5HVWQ==}
@@ -2563,20 +2558,20 @@ packages:
 
 snapshots:
 
-  '@antelopejs/api@file:.campaign/tgz/antelopejs-api-6afe3e2.tgz(@antelopejs/core@1.18.2)':
+  '@antelopejs/api@1.7.0(@antelopejs/core@1.20.0)':
     dependencies:
       '@antelopejs/interface-api': 'link:'
-      '@antelopejs/interface-api-util': file:.campaign/tgz/antelopejs-interface-api-util-b53e38a.tgz(@antelopejs/interface-api@)(@antelopejs/interface-core@0.4.0)
+      '@antelopejs/interface-api-util': 0.3.0(@antelopejs/interface-api@)(@antelopejs/interface-core@0.4.0)
       '@antelopejs/interface-core': 0.4.0
       reflect-metadata: 0.2.2
       ws: 8.20.0
     optionalDependencies:
-      '@antelopejs/core': 1.18.2
+      '@antelopejs/core': 1.20.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@antelopejs/core@1.18.2':
+  '@antelopejs/core@1.20.0':
     dependencies:
       '@antelopejs/interface-core': 0.4.0
       '@clack/prompts': 1.8.1
@@ -2591,7 +2586,7 @@ snapshots:
       semver: 7.7.4
       typescript: 5.9.3
 
-  '@antelopejs/interface-api-util@file:.campaign/tgz/antelopejs-interface-api-util-b53e38a.tgz(@antelopejs/interface-api@)(@antelopejs/interface-core@0.4.0)':
+  '@antelopejs/interface-api-util@0.3.0(@antelopejs/interface-api@)(@antelopejs/interface-core@0.4.0)':
     dependencies:
       '@antelopejs/interface-api': 'link:'
       '@antelopejs/interface-core': 0.4.0
