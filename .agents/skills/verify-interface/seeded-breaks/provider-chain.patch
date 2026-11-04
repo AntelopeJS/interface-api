@@ -1,0 +1,13 @@
+diff --git a/src/controller.ts b/src/controller.ts
+index 68a2b1e..6aec145 100644
+--- a/src/controller.ts
++++ b/src/controller.ts
+@@ -133,7 +133,7 @@ export async function computeParameter(
+     return undefined;
+   }
+   let val = await param.provider.apply(obj, [context]);
+-  for (const modifier of param.modifiers) {
++  for (const modifier of [...param.modifiers].reverse()) {
+     val = await modifier.apply(obj, [context, val]);
+   }
+   return val;

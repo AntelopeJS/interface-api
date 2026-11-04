@@ -2,7 +2,7 @@ import assert from "node:assert";
 import sinon, { type SinonSpy } from "sinon";
 import { MakeMethodDecorator } from "@antelopejs/interface-core/decorators";
 
-const spies = new Map<object, Map<PropertyKey, SinonSpy>>();
+const spies = new Map<unknown, Map<PropertyKey, SinonSpy>>();
 
 export const SpyMethod = MakeMethodDecorator((target, key, descriptor) => {
   const spy = sinon.spy(descriptor.value);

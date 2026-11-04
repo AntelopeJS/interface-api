@@ -1,9 +1,12 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { Class } from "@antelopejs/interface-core/decorators";
+import type {
+  Class,
+  DecoratorTarget,
+} from "@antelopejs/interface-core/decorators";
 
 import type { HTTPResult } from "./http-result";
 
-export type ControllerClass<T = Record<string, any>> = Class<T> & {
+export type ControllerClass<T = object> = Class<T> & {
   /**
    * Create a sub-controller at the given sub-location.
    *
@@ -101,6 +104,7 @@ export type ParameterProvider<Value = unknown> = (
  */
 export type ParameterModifier<Next = unknown> = (
   context: RequestContext,
+  // oxlint-disable-next-line anti-slop/no-unknown-parameters -- modifiers enter a parameter through separate decorator calls, so the framework cannot know what the step below a stacked decorator produced, and no type connects the two
   previous: unknown,
 ) => Next;
 
@@ -117,13 +121,13 @@ export interface ComputedParameter {
  *
  * @param context Request context
  * @param param Computed parameter chain
- * @param obj this Object for provider/modifier calls
+ * @param obj Controller instance, the `this` of provider and modifier calls
  * @returns Result
  */
 export async function computeParameter(
   context: RequestContext,
   param: ComputedParameter | null,
-  obj: unknown,
+  obj: InstanceType<ControllerClass>,
 ) {
   if (!param || !param.provider) {
     return undefined;
@@ -145,9 +149,10 @@ export class ControllerMeta {
   public static key = Symbol();
 
   /**
-   * Full location or the controller
+   * Full location of the controller; undefined for a class that Controller did
+   * not create, and for the prototypes GetMetadata walks above it
    */
-  public readonly location: string;
+  public readonly location: string | undefined;
 
   /**
    * Computed properties of the Controller (available to every handler)
@@ -162,8 +167,8 @@ export class ControllerMeta {
     Record<number, ComputedParameter>
   > = {};
 
-  constructor(target: { location: string }) {
-    this.location = target.location;
+  constructor(owner: DecoratorTarget) {
+    this.location = hasLocation(owner) ? owner.location : undefined;
   }
 
   inherit(parent: ControllerMeta) {
@@ -183,18 +188,19 @@ export class ControllerMeta {
    */
   getComputedParameter(key: PropertyKey, param: number | undefined) {
     if (param === undefined) {
-      if (!(key in this.computed_props)) {
+      if (!Object.hasOwn(this.computed_props, key)) {
         this.computed_props[key] = { modifiers: [] };
       }
       return this.computed_props[key];
     } else {
-      if (!(key in this.computed_params)) {
+      if (!Object.hasOwn(this.computed_params, key)) {
         this.computed_params[key] = [];
       }
-      if (!(param in this.computed_params[key])) {
-        this.computed_params[key][param] = { modifiers: [] };
+      const params = this.computed_params[key];
+      if (!Object.hasOwn(params, param)) {
+        params[param] = { modifiers: [] };
       }
-      return this.computed_params[key][param];
+      return params[param];
     }
   }
 
@@ -235,13 +241,15 @@ export class ControllerMeta {
    * @returns ComputedParameter list
    */
   getParameterArray(key: PropertyKey) {
-    const paramsMap = this.computed_params[key] || {};
+    const paramsMap = Object.hasOwn(this.computed_params, key)
+      ? this.computed_params[key]
+      : {};
     const paramsMax = Object.keys(paramsMap)
       .map((val) => parseInt(val, 10))
       .reduce((a, b) => Math.max(a, b), 0);
     const params = [];
     for (let i = 0; i <= paramsMax; ++i) {
-      params[i] = i in paramsMap ? paramsMap[i] : null;
+      params[i] = Object.hasOwn(paramsMap, i) ? paramsMap[i] : null;
     }
     return params;
   }
@@ -254,18 +262,44 @@ export class ControllerMeta {
  * @param base Optional base Controller to inherit properties from
  * @returns New Controller
  */
-export function Controller<T extends object = object>(
+export function Controller(location: string): ControllerClass<object>;
+export function Controller<T extends object>(
+  location: string,
+  base: Class<T>,
+): ControllerClass<T>;
+export function Controller<T extends object>(
   location: string,
   base?: Class<T>,
-): ControllerClass<T> {
-  const c: any = base ? class extends base {} : class {};
+): ControllerClass<T> | ControllerClass<object> {
+  if (!base) {
+    return Object.assign(class {}, { location, extend });
+  }
+  return Object.assign(class extends base {}, { location, extend });
+}
 
-  c.location = location;
-  c.extend = function (location: string) {
-    return Controller(`${this.location}/${location}`, this);
-  };
+function hasLocation<O extends object>(
+  owner: O,
+): owner is O & { location: string } {
+  return "location" in owner && typeof owner.location === "string";
+}
 
-  return c;
+/**
+ * Whether the class that built a decorated prototype is one Controller created:
+ * it carries the static `location` and `extend` that Controller assigns.
+ */
+export function isControllerClass(owner: Function): owner is ControllerClass {
+  return (
+    hasLocation(owner) &&
+    "extend" in owner &&
+    typeof owner.extend === "function"
+  );
+}
+
+function extend<E extends ControllerClass>(this: E, location: string): E {
+  return Object.assign(class extends this {}, {
+    location: `${this.location}/${location}`,
+    extend,
+  });
 }
 
 /**

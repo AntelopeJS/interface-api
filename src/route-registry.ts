@@ -1,6 +1,6 @@
 import { RegisteringProxy } from "@antelopejs/interface-core";
 
-import type { ComputedParameter } from "./controller";
+import type { ComputedParameter, ControllerClass } from "./controller";
 
 /**
  * Handler priority enum.
@@ -66,9 +66,9 @@ export interface RouteHandler {
   properties: Record<string, ComputedParameter>;
 
   /**
-   * Controller prototype.
+   * Class of the controller that declares the handler.
    */
-  proto: any;
+  controller: ControllerClass;
 
   /**
    * Handler priority.

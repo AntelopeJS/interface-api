@@ -1,9 +1,10 @@
 import { Logging } from "@antelopejs/interface-core/logging";
 import { GetMetadata, GetResponsibleModule } from "@antelopejs/interface-core";
+import type { DecoratorTarget } from "@antelopejs/interface-core/decorators";
 
 import { isSymbol } from "./guards";
 import { routesProxy } from "./proxies";
-import { ControllerMeta } from "./controller";
+import { ControllerMeta, isControllerClass } from "./controller";
 import {
   type HandlerPriority,
   type RouteHandler,
@@ -21,8 +22,14 @@ let nextId = 0;
  *
  * @param handler Route handler
  * @returns New route ID
+ * @throws {TypeError} When the handler names no {@link RouteHandler.controller}
  */
 export function RegisterRoute(handler: RouteHandler) {
+  if (!handler.controller) {
+    throw new TypeError(
+      `Cannot register ${handler.method.toUpperCase()} ${handler.location}: RouteHandler.controller is required`,
+    );
+  }
   const id = nextId++;
   const enriched: RouteHandler = { ...handler, module: GetResponsibleModule() };
   Logging.Debug(
@@ -76,25 +83,40 @@ function handlerSegment(key: PropertyKey): string | number {
  * decorator's property descriptor
  */
 export function ProcessCallback(
-  target: any,
+  target: DecoratorTarget,
   key: PropertyKey,
-  descriptor: PropertyDescriptor,
+  descriptor: TypedPropertyDescriptor<RouteHandler["callback"]>,
   ...route: RouteArguments
 ) {
   const [mode, method, location, priority] = route;
-  const meta = GetMetadata(target.constructor, ControllerMeta);
+  const callback = descriptor.value;
+  if (callback === undefined) {
+    throw new TypeError(
+      `Route decorators apply to methods; ${String(key)} has no value`,
+    );
+  }
+  const controller = target.constructor;
+  if (!isControllerClass(controller)) {
+    throw new TypeError(
+      `Route decorators apply to Controller classes; ${controller.name} has no location`,
+    );
+  }
+  const meta = GetMetadata(controller, ControllerMeta);
   const fullLocation =
-    `${meta.location}/${location ?? handlerSegment(key)}`.replace(/\/+/g, "/");
+    `${controller.location}/${location ?? handlerSegment(key)}`.replace(
+      /\/+/g,
+      "/",
+    );
 
   return {
     id: RegisterRoute({
       mode,
       method,
       location: fullLocation,
-      callback: descriptor.value,
+      callback,
       parameters: meta.getParameterArray(key),
       properties: meta.computed_props,
-      proto: target,
+      controller,
       priority,
     }),
   };

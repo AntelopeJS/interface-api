@@ -1,0 +1,13 @@
+diff --git a/src/http-result.ts b/src/http-result.ts
+index dfb1750..618bebf 100644
+--- a/src/http-result.ts
++++ b/src/http-result.ts
+@@ -99,7 +99,7 @@ export class HTTPResult {
+       this.contentType = type ?? "text/plain";
+     } else {
+       this.body = JSON.stringify(body);
+-      this.contentType = type ?? "application/json";
++      this.contentType = type ?? "text/plain";
+     }
+   }
+ 

@@ -2,6 +2,8 @@ import assert from "node:assert";
 
 import {
   type ComputedParameter,
+  Controller,
+  Get,
   getRegisteredRouteHandlers,
   getRegisteredRoutes,
   HandlerPriority,
@@ -20,6 +22,8 @@ interface ProxyCall {
 
 const proxyCalls: ProxyCall[] = [];
 
+class LifecycleController extends Controller("/lifecycle") {}
+
 function handlerAt(location: string): RouteHandler {
   return {
     location,
@@ -27,7 +31,7 @@ function handlerAt(location: string): RouteHandler {
     mode: "handler",
     parameters: [],
     properties: {},
-    proto: {},
+    controller: LifecycleController,
     callback: async () => new Response(),
   };
 }
@@ -43,7 +47,7 @@ function completeHandlerAt(location: string): RouteHandler {
     mode: "prefix",
     parameters: [parameter, null],
     properties: { property: parameter },
-    proto: { controller: location },
+    controller: LifecycleController,
     callback: function completeRouteCallback() {
       return location;
     },
@@ -110,6 +114,25 @@ describe("Route lifecycle", () => {
     assert.equal(routesAt("/lifecycle/bystander"), 0);
   });
 
+  it("refuses a handler that names no controller and registers nothing", () => {
+    const handler = handlerAt("/lifecycle/no-controller");
+    // @ts-expect-error off-contract handler without its required controller; RegisterRoute must throw a TypeError at registration
+    delete handler.controller;
+    const before = getRegisteredRoutes().length;
+
+    assert.throws(
+      () => RegisterRoute(handler),
+      (error) =>
+        error instanceof TypeError &&
+        error.message.includes("GET") &&
+        error.message.includes("/lifecycle/no-controller") &&
+        error.message.includes("controller"),
+    );
+
+    assert.equal(getRegisteredRoutes().length, before);
+    assert.deepEqual(proxyCalls, []);
+  });
+
   it("tolerates unregistering the same id twice", () => {
     const id = RegisterRoute(handlerAt("/lifecycle/twice"));
     UnregisterRoute(id);
@@ -156,7 +179,12 @@ describe("getRegisteredRouteHandlers", () => {
     assert.equal(handler.mode, original.mode);
     assert.equal(handler.priority, original.priority);
     assert.equal(handler.callback(), original.location);
-    assert.deepEqual(handler.proto, original.proto);
+    assert.strictEqual(handler.controller, original.controller);
+    assert.equal(
+      Object.hasOwn(handler, "proto"),
+      false,
+      "The registered copy names its controller only",
+    );
     assert.equal(handler.parameters.length, 2);
     assert.equal(handler.parameters[1], null);
     assert.equal(providedValueOf(handler.parameters[0]), "parameter");
@@ -174,6 +202,24 @@ describe("getRegisteredRouteHandlers", () => {
       stableFieldsOf(handler),
     );
     assert.equal(Object.hasOwn(original, "module"), false);
+  });
+
+  it("registers a decorated route with the class that declares it", () => {
+    class DeclaringController extends Controller("/lifecycle/declared") {
+      @Get("route")
+      route() {
+        return "declared";
+      }
+    }
+
+    const registered = getRegisteredRouteHandlers().find(
+      ({ handler }) => handler.location === "/lifecycle/declared/route",
+    );
+
+    assert(registered);
+    assert.strictEqual(registered.handler.controller, DeclaringController);
+    assert.equal(Object.hasOwn(registered.handler, "proto"), false);
+    UnregisterRoute(Number(registered.id));
   });
 
   it("excludes explicitly unregistered routes", () => {

@@ -1,5 +1,6 @@
 import { GetMetadata } from "@antelopejs/interface-core";
 import {
+  type DecoratorTarget,
   MakeParameterAndPropertyDecorator,
   MakeParameterDecorator,
 } from "@antelopejs/interface-core/decorators";
@@ -36,7 +37,7 @@ import {
  * ```
  */
 export function SetParameterProvider(
-  target: any,
+  target: DecoratorTarget,
   key: PropertyKey,
   index: number | undefined,
   provider: ParameterProvider,
@@ -70,7 +71,7 @@ export function SetParameterProvider(
  * ```
  */
 export function AddParameterModifier(
-  target: any,
+  target: DecoratorTarget,
   key: PropertyKey,
   index: number | undefined,
   transformer: ParameterModifier,
@@ -134,7 +135,8 @@ export const JSONBody = MakeParameterAndPropertyDecorator(
           return undefined;
         }
         if (isString(body) || body instanceof Buffer) {
-          return JSON.parse(body.toString());
+          const parsed: unknown = JSON.parse(body.toString());
+          return parsed;
         }
         throw new Error("Unable to parse JSON: Invalid body type");
       }),
