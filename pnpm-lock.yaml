@@ -5,17 +5,15 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@antelopejs/api': file:.campaign/tgz/antelopejs-api-6afe3e2.tgz
   '@antelopejs/api>@antelopejs/interface-api': link:.
-  '@antelopejs/interface-api-util': 0.3.0
 
 importers:
 
   .:
     devDependencies:
       '@antelopejs/api':
-        specifier: file:.campaign/tgz/antelopejs-api-6afe3e2.tgz
-        version: file:.campaign/tgz/antelopejs-api-6afe3e2.tgz(@antelopejs/core@1.20.0)
+        specifier: 1.7.0
+        version: 1.7.0(@antelopejs/core@1.20.0)
       '@antelopejs/core':
         specifier: ^1.20.0
         version: 1.20.0
@@ -76,9 +74,8 @@ importers:
 
 packages:
 
-  '@antelopejs/api@file:.campaign/tgz/antelopejs-api-6afe3e2.tgz':
-    resolution: {integrity: sha512-M+L2u8CwdSJb/U/yCCqk/XXx3RmuNmYlUV//U3Z41w/05DrT79iIFViUBZhuy3gKrTOiEZVbJ5DVA0XEq1I4Ug==, tarball: file:.campaign/tgz/antelopejs-api-6afe3e2.tgz}
-    version: 1.6.0
+  '@antelopejs/api@1.7.0':
+    resolution: {integrity: sha512-1FlpkyVc7lkqJXl+qXWPqZv46ttjj/0ZA3iwgY/KISGoORmnu46HzQKwx9fGOCB4ZMUy2esL4M3oplmdpibgNg==}
     peerDependencies:
       '@antelopejs/core': '>=1.17.0 <2'
     peerDependenciesMeta:
@@ -2561,7 +2558,7 @@ packages:
 
 snapshots:
 
-  '@antelopejs/api@file:.campaign/tgz/antelopejs-api-6afe3e2.tgz(@antelopejs/core@1.20.0)':
+  '@antelopejs/api@1.7.0(@antelopejs/core@1.20.0)':
     dependencies:
       '@antelopejs/interface-api': 'link:'
       '@antelopejs/interface-api-util': 0.3.0(@antelopejs/interface-api@)(@antelopejs/interface-core@0.4.0)
