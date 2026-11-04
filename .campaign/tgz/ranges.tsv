@@ -3,3 +3,4 @@
 @antelopejs/api	pnpm-workspace.yaml	overrides	
 @antelopejs/api>@antelopejs/interface-api-util	package.json	pnpm.overrides	
 @antelopejs/api>@antelopejs/interface-api-util	pnpm-workspace.yaml	overrides	
+@antelopejs/interface-api-util	package.json	pnpm.overrides	
