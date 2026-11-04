@@ -9,6 +9,8 @@
 
 The AntelopeJS contract for HTTP and WebSocket APIs: declare controllers and routes with decorators, and let the module that implements the interface serve them.
 
+Part of [AntelopeJS](https://github.com/AntelopeJS/antelopejs). Used by [AntelopeJS DMS](https://github.com/AntelopeJS/dms), the open-source back office for your PostgreSQL, MongoDB or RethinkDB database.
+
 ## What it offers
 
 - `Controller` and `PartialController` group routes under a base path, with nesting through `extend`.
