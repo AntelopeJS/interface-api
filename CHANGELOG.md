@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.0
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.2.0...v0.3.0)
+
+### 🏡 Chore
+
+- Land the cleanup campaign on main ([#85](https://github.com/AntelopeJS/interface-api/pull/85))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli ([@Upd4ting](http://github.com/Upd4ting))
+
 ## v0.2.0
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.1.0...v0.2.0)
