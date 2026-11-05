@@ -259,20 +259,17 @@ const config: VerifyConfig = {
     contract: {
       globs: ["src/index.ts", "package.json"],
       funnels: [],
-      containments: [],
       why: "the controllers, decorators, HTTPResult and the four proxies are what every module that serves HTTP imports, and the order of the exports is the published key order",
     },
     outbound: null,
     exposure: {
       globs: ["src/proxies.ts", "src/body.ts"],
       funnels: [],
-      containments: [],
       why: "CorsConfig decides which origins a browser may read from, and the request body limit decides how much a client can make the server buffer",
     },
     publish: {
       globs: ["package.json", ".release-it.json", "changelogen.config.json", ".github/workflows/release.yml"],
       funnels: [],
-      containments: [],
       why: "the package name and release workflow claim @antelopejs/interface-api on npm",
     },
   },
