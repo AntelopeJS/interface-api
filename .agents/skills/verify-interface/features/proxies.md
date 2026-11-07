@@ -1,6 +1,10 @@
 ---
 covers:
   - src/proxies.ts
+  - src/controller.ts
+  - src/guards.ts
+  - src/http-result.ts
+  - src/route-registry.ts
 docs:
   - docs/2.controllers.md
   - docs/3.http-handling.md

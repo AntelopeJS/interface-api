@@ -1,6 +1,6 @@
 # Feature map
 
-One file per feature. `covers:` lists the source globs it owns, `docs:` the pages a verdict judges, and `journeys:` the journeys it runs. `pnpm exec antelopejs-verify map` checks that every user-facing file is covered.
+One file per feature. `covers:` lists the source files its journeys exercise, plus every `src/` file those files import, directly or indirectly, so a change to a shared module runs every feature that depends on it. `docs:` lists the pages a verdict judges, and `journeys:` the journeys it runs. `pnpm exec antelopejs-verify map` checks that every user-facing file is covered.
 
 | Feature | What the user does | Journeys |
 |---|---|---|
@@ -8,7 +8,7 @@ One file per feature. `covers:` lists the source globs it owns, `docs:` the page
 | [routes](routes.md) | A module author maps methods to endpoints and adds prefix, postfix, monitor and WebSocket hooks. | route-locations, route-errors |
 | [registry](registry.md) | A module registers, removes and lists routes at run time. | registry-lifecycle |
 | [parameter-sources](parameter-sources.md) | A handler argument or property receives route, query, header, context, stream or connection data. | parameter-sources, injected-values |
-| [provider-chain](provider-chain.md) | A reusable decorator feeds a provider's value through ordered modifiers. | provider-chain |
+| [provider-chain](provider-chain.md) | A reusable decorator feeds a provider's value through ordered modifiers. | provider-chain, stacked-decorators |
 | [body](body.md) | A handler reads the request body buffered, as JSON or as a stream, under a size limit. | body-decoders, body-limit |
 | [http-result](http-result.md) | A handler sets the status, body, content type, headers and stream of a response. | result-basics, result-headers, result-send |
 | [proxies](proxies.md) | A module calls `Listen`, `GetControllerInstance`, `GetCorsConfig` and `SetCorsConfig` through core. | core-calls, cors-calls |

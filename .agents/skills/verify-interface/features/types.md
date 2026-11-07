@@ -3,6 +3,13 @@ covers:
   - src/http-result.ts
   - src/controller.ts
   - src/route-registry.ts
+  - src/proxies.ts
+  - src/parameter-decorators.ts
+  - src/route-decorators.ts
+  - src/routes.ts
+  - src/index.ts
+  - src/body.ts
+  - src/guards.ts
 docs:
   - docs/3.http-handling.md
   - docs/2.controllers.md

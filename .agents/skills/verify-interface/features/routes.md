@@ -2,6 +2,11 @@
 covers:
   - src/route-decorators.ts
   - src/routes.ts
+  - src/guards.ts
+  - src/controller.ts
+  - src/http-result.ts
+  - src/proxies.ts
+  - src/route-registry.ts
 docs:
   - docs/2.controllers.md
 journeys:
