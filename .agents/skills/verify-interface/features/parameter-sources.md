@@ -1,6 +1,10 @@
 ---
 covers:
   - src/parameter-decorators.ts
+  - src/body.ts
+  - src/controller.ts
+  - src/guards.ts
+  - src/http-result.ts
 docs:
   - docs/4.parameters.md
 journeys:

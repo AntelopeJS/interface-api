@@ -2,6 +2,10 @@
 covers:
   - src/route-registry.ts
   - src/routes.ts
+  - src/proxies.ts
+  - src/controller.ts
+  - src/guards.ts
+  - src/http-result.ts
 docs:
   - docs/2.controllers.md
 journeys:

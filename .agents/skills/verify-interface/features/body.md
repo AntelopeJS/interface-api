@@ -2,6 +2,9 @@
 covers:
   - src/body.ts
   - src/parameter-decorators.ts
+  - src/guards.ts
+  - src/controller.ts
+  - src/http-result.ts
 docs:
   - docs/3.http-handling.md
   - docs/4.parameters.md

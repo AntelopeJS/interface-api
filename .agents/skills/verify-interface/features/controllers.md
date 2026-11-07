@@ -1,6 +1,8 @@
 ---
 covers:
   - src/controller.ts
+  - src/guards.ts
+  - src/http-result.ts
 docs:
   - docs/2.controllers.md
 journeys:
