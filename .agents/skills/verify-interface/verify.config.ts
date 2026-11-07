@@ -149,17 +149,21 @@ function declared(title: string): Journey {
       await context.command("link the repository's dependencies", "ln", ["-s", `${context.repo}/node_modules`, `${context.work}/node_modules`]);
       const good = `${context.work}/good.ts`;
       context.edit("write the accepted-use probe", good, `${header}${ACCEPTED_USES.replace(/\$\{DIST\}/g, dist)}`);
-      const accepted = await context.command("compile the accepted-use probe", "node", [...common, good]);
       const bad = `${context.work}/bad.ts`;
       context.edit("write the refusal probe", bad, `${header}\n${REFUSED_USES.join("\n")}\n`);
-      const refused = await context.command("compile the refusal probe", "node", [...common, bad]);
+      const compiled = await context.command("compile both probes", "node", [...common, good, bad]);
       const headerLines = header.split("\n").length;
-      const lines = refused.stdout.split("\n").flatMap((line) => {
-        const match = /^bad\.ts\((\d+),\d+\): error TS\d+/.exec(line.replace(`${context.work}/`, ""));
+      const errors = compiled.stdout
+        .split("\n")
+        .map((line) => line.replace(`${context.work}/`, ""))
+        .filter((line) => /\berror TS\d+/.test(line));
+      const lines = errors.flatMap((line) => {
+        const match = /^bad\.ts\((\d+),\d+\): error TS\d+/.exec(line);
         return match ? [Number(match[1]) - headerLines] : [];
       });
-      context.expect(accepted.folder, [{ name: "every documented use compiles", pass: accepted.exitCode === 0, detail: accepted.stdout.slice(0, 600) }]);
-      context.expect(refused.folder, [
+      const outsideRefusals = errors.filter((line) => !line.startsWith("bad.ts("));
+      context.expect(compiled.folder, [
+        { name: "every documented use compiles", pass: outsideRefusals.length === 0 && compiled.exitCode !== null && compiled.exitCode <= 2, detail: outsideRefusals.join("\n").slice(0, 600) || compiled.stderr.slice(-300) },
         equal("the compiler refuses exactly the shapes the docs say it refuses", lines, REFUSED_USES.map((_line, index) => index + 1)),
       ]);
     },
