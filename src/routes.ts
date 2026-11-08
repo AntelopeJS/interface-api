@@ -107,11 +107,10 @@ export function ProcessCallback(
     );
   }
   const meta = GetMetadata(controller, ControllerMeta);
-  const fullLocation =
-    `${controller.location}/${location ?? handlerSegment(controller.name, key)}`.replace(
-      /\/+/g,
-      "/",
-    );
+  const segment = location ?? handlerSegment(controller.name, key);
+  const joined =
+    segment === "" ? controller.location : `${controller.location}/${segment}`;
+  const fullLocation = (joined || "/").replace(/\/+/g, "/");
 
   return {
     id: RegisterRoute({
