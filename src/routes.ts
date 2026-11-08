@@ -65,7 +65,9 @@ type RouteArguments = [
 
 function handlerSegment(key: PropertyKey): string | number {
   if (isSymbol(key)) {
-    throw new TypeError("Cannot convert a Symbol value to a string");
+    throw new TypeError(
+      `Route decorators on a symbol-keyed method need a location; ${String(key)} has none`,
+    );
   }
   return key;
 }
