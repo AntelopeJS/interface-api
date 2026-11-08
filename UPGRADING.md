@@ -8,6 +8,7 @@ Each section is the upgrade-notes block of one release. Paste it into the GitHub
 
 - A query value is `true` for `?name` and `?name=`, `undefined` when absent, and a string otherwise. A property or handler argument decorated with `@Parameter(name, "query")` must now be typed to admit `string | true | undefined`, such as `string | true | undefined`, `string | true` on an optional member, or `unknown`. A member typed `string` fails `tsc` with TS1240 (property) or TS1239 (argument). Runtime unchanged ([#57](https://github.com/AntelopeJS/interface-api/issues/57)).
 - A private or protected member, and an argument of a private or protected method, are not checked: the compiler gives the decorator no access to their type.
+- A wrapper whose `source` parameter is typed `"param" | "query" | "header"` returns the query decorator for every call, so its members must admit `true` even when the caller passes `"param"`.
 - The check reads the declared type, and a stacked `@Transform` does not change it. `@Parameter("page", "query") @Transform(toNumber) page: number` stops compiling. Convert the value in the handler, or build the decorator with `SetParameterProvider` and `AddParameterModifier`, whose type is not checked.
 
 ## v0.3.0
