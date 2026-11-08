@@ -64,7 +64,7 @@ describe("Route decorators", () => {
     assert.throws(decorateSymbolKey, {
       name: "TypeError",
       message:
-        "Route decorators on a symbol-keyed method need a location; Symbol(handler) has none",
+        "Route decorators on a symbol-keyed method need a location; SymbolController[Symbol(handler)] has none",
     });
   });
 
