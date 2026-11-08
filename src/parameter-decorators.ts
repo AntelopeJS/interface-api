@@ -199,13 +199,13 @@ interface QueryDecorator {
   ): void;
 }
 
-/** The signatures of {@link Parameter}: the `"query"` source returns a {@link QueryDecorator}. */
+/** The signatures of {@link Parameter}: a source that may be `"query"` returns a {@link QueryDecorator}. */
 interface ParameterFactory {
-  (name: string, source: "query"): QueryDecorator;
   (
     name: string,
     source?: "param" | "header",
   ): PropertyDecorator & ParameterDecorator;
+  (name: string, source: "param" | "query" | "header"): QueryDecorator;
 }
 
 /**
