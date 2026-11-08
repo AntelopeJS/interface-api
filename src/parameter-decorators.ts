@@ -3,6 +3,8 @@ import {
   type DecoratorTarget,
   MakeParameterAndPropertyDecorator,
   MakeParameterDecorator,
+  type ParameterDecorator,
+  type PropertyDecorator,
 } from "@antelopejs/interface-core/decorators";
 
 import { isString } from "./guards";
@@ -165,6 +167,47 @@ export const BodyStream = MakeParameterAndPropertyDecorator(
     SetParameterProvider(target, key, param, (context) => StreamBody(context)),
 );
 
+/** What `@Parameter(name, "query")` provides: the first value, `true` for `?name` and `?name=`, `undefined` when absent. */
+type QueryValue = string | true | undefined;
+
+/** `unknown` when member `K` of `T` admits a {@link QueryValue} or is not visible to the compiler, `never` otherwise. */
+type QueryProperty<T, K> = K extends keyof T
+  ? QueryValue extends T[K]
+    ? unknown
+    : never
+  : unknown;
+
+/** `unknown` when argument `I` of method `K` of `T` admits a {@link QueryValue} or is not visible to the compiler, `never` otherwise. */
+type QueryArgument<T, K, I extends number> = K extends keyof T
+  ? T[K] extends (...args: infer A) => void
+    ? QueryValue extends A[I]
+      ? unknown
+      : never
+    : unknown
+  : unknown;
+
+/** The decorator `@Parameter(name, "query")` returns: it refuses a property or handler argument whose type does not admit {@link QueryValue}. */
+interface QueryDecorator {
+  <T extends object, K extends PropertyKey>(
+    target: T,
+    key: K & QueryProperty<T, K>,
+  ): void;
+  <T extends object, K extends PropertyKey, I extends number>(
+    target: T,
+    key: K & QueryArgument<T, K, I>,
+    index: I,
+  ): void;
+}
+
+/** The signatures of {@link Parameter}: the `"query"` source returns a {@link QueryDecorator}. */
+interface ParameterFactory {
+  (name: string, source: "query"): QueryDecorator;
+  (
+    name: string,
+    source?: "param" | "header",
+  ): PropertyDecorator & ParameterDecorator;
+}
+
 /**
  * Parameter Provider: Request Parameter.
  *
@@ -179,7 +222,9 @@ export const BodyStream = MakeParameterAndPropertyDecorator(
  * @param name Name of the parameter to extract
  * @param source Where to extract the parameter from:
  *   - 'param': Route parameters (e.g., '/users/:id' where 'id' is the parameter)
- *   - 'query': URL query parameters (e.g., '/users?id=123' where 'id' is the parameter)
+ *   - 'query': URL query parameters (e.g., '/users?id=123' where 'id' is the parameter).
+ *     `?id` and `?id=` give `true`, so the property or parameter type must admit
+ *     `string | true | undefined`; the compiler refuses a narrower type such as `string`.
  *   - 'header': HTTP request headers (e.g., 'Authorization' or 'Content-Type')
  *
  * Example:
@@ -187,7 +232,7 @@ export const BodyStream = MakeParameterAndPropertyDecorator(
  * @Get('users/:id')
  * getUser(
  *   @Parameter('id') id: string,
- *   @Parameter('fields', 'query') fields?: string,
+ *   @Parameter('fields', 'query') fields: string | true | undefined,
  *   @Parameter('Authorization', 'header') auth?: string
  * ) {
  *   // id: from route parameter (/users/123)
@@ -197,7 +242,7 @@ export const BodyStream = MakeParameterAndPropertyDecorator(
  * }
  * ```
  */
-export const Parameter = MakeParameterAndPropertyDecorator(
+export const Parameter: ParameterFactory = MakeParameterAndPropertyDecorator(
   (
     target,
     key,

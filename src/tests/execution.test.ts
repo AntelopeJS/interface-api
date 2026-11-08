@@ -67,7 +67,9 @@ export class TestExecutionController2 extends Controller(
 
   @Get()
   @SpyMethod()
-  testProviderParameterQuery(@Parameter("key", "query") _param: string) {}
+  testProviderParameterQuery(
+    @Parameter("key", "query") _param: string | true | undefined,
+  ) {}
 
   @Get()
   @SpyMethod()

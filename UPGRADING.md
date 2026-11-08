@@ -2,6 +2,13 @@
 
 Each section is the upgrade-notes block of one release. Paste it into the GitHub release body and under the release's heading in `CHANGELOG.md`. The changelog generator writes only commit subjects.
 
+## Unreleased
+
+### `@Parameter(name, "query")` refuses a type that does not admit `true`
+
+- A query value is `true` for `?name` and `?name=`, `undefined` when absent, and a string otherwise. A property or handler argument decorated with `@Parameter(name, "query")` must now be typed to admit `string | true | undefined`, such as `string | true | undefined`, `string | true` on an optional member, or `unknown`. A member typed `string` fails `tsc` with TS1240 (property) or TS1239 (argument). Runtime unchanged ([#57](https://github.com/AntelopeJS/interface-api/issues/57)).
+- A private member is not checked: the compiler gives the decorator no access to its type.
+
 ## v0.3.0
 
 ### Requirements
