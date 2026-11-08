@@ -12,14 +12,14 @@ import { FetchTest } from "./fetch-test";
 export class TestControllerPrefixController extends Controller(
   "/prefix/secured",
 ) {
-  @Prefix("get", "*", HandlerPriority.HIGHEST)
+  @Prefix("get", "", HandlerPriority.HIGHEST)
   checkAuthentication(@Parameter("authorization", "header") role?: string) {
     if (!role) {
       return new HTTPResult(401, "Unauthorized");
     }
   }
 
-  @Prefix("get", "*", HandlerPriority.HIGH)
+  @Prefix("get", "", HandlerPriority.HIGH)
   checkAuthorization(@Parameter("authorization", "header") role?: string) {
     if (role !== "admin") {
       return new HTTPResult(403, "Forbidden");

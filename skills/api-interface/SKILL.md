@@ -87,8 +87,9 @@ Sub-paths: `class Sub extends BookController.extend("archive") {}` mounts at
   nothing (the parameter is `undefined` at runtime).
 - Argument order differs: `@Get/@Post/@Put/@Delete(location?, mode?)` take the
   location first, but `@Prefix/@Postfix/@Monitor(method, location?, priority?)`
-  take the HTTP method first; `"*"` as location matches all routes under the
-  controller.
+  take the HTTP method first. They match their location and every route below
+  it, so `""` as location covers all routes of the controller; `"*"` is a
+  literal segment, not a wildcard.
 - `@Get()` with no location uses the method name as the path segment.
 - Prefix handlers run before the main handler (auth/validation); if a prefix
   handler returns a value, that value becomes the response and the main
