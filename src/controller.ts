@@ -85,12 +85,15 @@ export interface RequestContext {
  * Provider => [Modifier...] => Parameter/Property in handler
  *
  * @template Value Type of the value the provider produces
+ * @template Context Request context the provider reads: a `RequestContext`
+ * that also holds the slots a controller decorator sets on the request
  * @param context Request context
  * @returns Value passed to modifiers or directly to the handler
  */
-export type ParameterProvider<Value = unknown> = (
-  context: RequestContext,
-) => Value;
+export type ParameterProvider<
+  Value = unknown,
+  Context extends RequestContext = RequestContext,
+> = (context: Context) => Value;
 
 /**
  * For computed parameters, a modifier in the chain of the parameter:
@@ -112,7 +115,14 @@ export type ParameterModifier<Next = unknown> = (
  * Combination of a parameter provider and zero or more parameter modifiers.
  */
 export interface ComputedParameter {
-  provider?: ParameterProvider;
+  /**
+   * Source of the parameter. It reads the context its decorator declared,
+   * which the route that registers it supplies, so it holds a
+   * `ParameterProvider` of any `RequestContext` subtype.
+   */
+  provider?: {
+    provide(context: RequestContext): ReturnType<ParameterProvider>;
+  }["provide"];
   modifiers: ParameterModifier[];
 }
 
@@ -209,12 +219,13 @@ export class ControllerMeta {
    *
    * @param key Handler key or Property key
    * @param param If used on a handler, parameter index
-   * @param modifier Parameter provider
+   * @param provider Parameter provider
+   * @template Context Request context the provider reads
    */
-  setProvider(
+  setProvider<Context extends RequestContext = RequestContext>(
     key: PropertyKey,
     param: number | undefined,
-    provider: ParameterProvider,
+    provider: ParameterProvider<unknown, Context>,
   ) {
     this.getComputedParameter(key, param).provider = provider;
   }

@@ -113,6 +113,10 @@ Sub-paths: `class Sub extends BookController.extend("archive") {}` mounts at
   attach per-value transforms with `@Transform(fn)`. `ParameterProvider<Value>`
   and `ParameterModifier<Next>` type the value they produce (default `unknown`;
   a modifier receives its previous value as `unknown`);
+  `ParameterProvider<Value, Context>` also names the context a provider reads
+  (a `RequestContext` subtype holding a slot a controller decorator or prefix
+  handler sets; `SetParameterProvider` infers it, nothing checks the route
+  sets it);
   `context.body` is the `Promise<Buffer>` that `ReadBody` caches, undefined
   until a handler reads the body.
 - Providing this interface is the job of an HTTP server module (it implements
