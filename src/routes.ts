@@ -4,7 +4,12 @@ import type { DecoratorTarget } from "@antelopejs/interface-core/decorators";
 
 import { isSymbol } from "./guards";
 import { routesProxy } from "./proxies";
-import { ControllerMeta, isControllerClass } from "./controller";
+import {
+  type ComputedParameter,
+  ControllerMeta,
+  isControllerClass,
+} from "./controller";
+import { connectionProvider } from "./parameter-decorators";
 import {
   type HandlerPriority,
   type RouteHandler,
@@ -63,6 +68,26 @@ type RouteArguments = [
   priority?: HandlerPriority,
 ];
 
+const CONNECTION_MODES: ReadonlySet<RouteHandlerMode> = new Set([
+  "websocket",
+  "monitor",
+]);
+
+function refuseConnectionOutsideItsModes(
+  parameters: Array<ComputedParameter | null>,
+  mode: RouteHandlerMode,
+  handlerName: string,
+) {
+  const index = parameters.findIndex(
+    (parameter) => parameter?.provider === connectionProvider,
+  );
+  if (!CONNECTION_MODES.has(mode) && index !== -1) {
+    throw new TypeError(
+      `@Connection applies in websocket and monitor mode; parameter ${index} of ${handlerName}, declared on it or on a parent controller's method of that name, registers in ${mode} mode`,
+    );
+  }
+}
+
 function handlerSegment(
   controllerName: string,
   key: PropertyKey,
@@ -86,6 +111,9 @@ function handlerSegment(
  * priority are optional
  * @returns `{ id }`, an object because {@link Route} returns it as a method
  * decorator's property descriptor
+ * @throws {TypeError} When a parameter of the handler receives `@Connection`,
+ * set on it or inherited from a parent controller's method of the same name,
+ * and the mode is neither `websocket` nor `monitor`
  */
 export function ProcessCallback(
   target: DecoratorTarget,
@@ -113,13 +141,20 @@ export function ProcessCallback(
       "/",
     );
 
+  const parameters = meta.getParameterArray(key);
+  refuseConnectionOutsideItsModes(
+    parameters,
+    mode,
+    `${controller.name}.${String(key)}`,
+  );
+
   return {
     id: RegisterRoute({
       mode,
       method,
       location: fullLocation,
       callback,
-      parameters: meta.getParameterArray(key),
+      parameters,
       properties: meta.computed_props,
       controller,
       priority,

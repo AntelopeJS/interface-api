@@ -107,7 +107,10 @@ Sub-paths: `class Sub extends BookController.extend("archive") {}` mounts at
   Nothing is sent until the handler returns `context.response`: write the
   stream from a background task and return at once, never await the writes.
 - WebSocket routes use `@WebsocketHandler(location)` with `@Connection()` to
-  get the socket; they are matched as GET upgrades.
+  get the socket; they are matched as GET upgrades. `@Connection()` on a
+  handler parameter applies in `websocket` and `monitor` mode; in `handler`,
+  `prefix` or `postfix` mode the route decorator throws a `TypeError` when the
+  class is defined. A monitor gets `undefined` for an HTTP request.
 - Custom injection: build your own decorators with `SetParameterProvider` /
   `AddParameterModifier` (provider -> modifiers chain, each may be async),
   wrapped with `MakeParameterDecorator` from
