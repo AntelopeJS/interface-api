@@ -24,7 +24,7 @@ A TypeScript author compiles against the packed declarations: `HTTPBody`, `Contr
 
 ## Sub-features
 
-- `declared-shapes`: a probe with the documented shapes compiles, and a probe with ten documented misuses (an `interface` as `HTTPBody`, an index into a bare controller instance, `RegisterRoute` without `controller`, `@Result` and `@WriteStream` on a property, an unknown handler mode, a non-origin `AllowedOrigin`, a string status, and a `@Parameter(name, "query")` property and handler argument typed `string`) gets exactly ten errors, one per line.
+- `declared-shapes`: a probe with the documented shapes compiles, and a probe with ten documented misuses (an `interface` as `HTTPBody`, an index into a bare controller instance, `RegisterRoute` without `controller`, `@Result` and `@WriteStream` on a property, an unknown handler mode, a non-origin `AllowedOrigin`, a string status, and a `@Parameter(name, "query")` property typed `string` and optional handler argument typed `string`) gets exactly ten errors, one per line.
 
 ## How to get to it (user POV)
 

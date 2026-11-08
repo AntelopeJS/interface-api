@@ -108,6 +108,10 @@ class Fine extends Controller("/fine") {
   @Get("") one(@Parameter("id") @Transform((_context, value) => value) id: string) { return id; }
 }
 const forwarded = (source: "param" | "query" | "header") => Parameter("x", source);
+const forwardedOptional = (name: string, source?: "param" | "query" | "header") => Parameter(name, source);
+const routeOnly: Parameters<typeof Parameter> = ["id"];
+const namedQuery: import("${"$"}{DIST}").QueryDecorator = Parameter("q", "query");
+type QueryValueShape = Assert<Identical<import("${"$"}{DIST}").QueryValue, string | true | undefined>>;
 class QueryUses extends Controller("/query") {
   @Parameter("q", "query") declare full: string | true | undefined;
   @Parameter("q", "query") declare wide: unknown;

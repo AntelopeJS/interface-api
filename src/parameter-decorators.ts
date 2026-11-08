@@ -168,7 +168,7 @@ export const BodyStream = MakeParameterAndPropertyDecorator(
 );
 
 /** What `@Parameter(name, "query")` provides: the first value, `true` for `?name` and `?name=`, `undefined` when absent. */
-type QueryValue = string | true | undefined;
+export type QueryValue = string | true | undefined;
 
 /** `unknown` when member `K` of `T` admits a {@link QueryValue} or is not visible to the compiler, `never` otherwise. */
 type QueryProperty<T, K> = K extends keyof T
@@ -186,8 +186,12 @@ type QueryArgument<T, K, I extends number> = K extends keyof T
     : unknown
   : unknown;
 
-/** The decorator `@Parameter(name, "query")` returns: it refuses a property or handler argument whose type does not admit {@link QueryValue}. */
-interface QueryDecorator {
+/**
+ * The decorator `@Parameter(name, "query")` returns: it refuses a property or handler argument whose type does not admit {@link QueryValue}.
+ *
+ * It reads the declared type, which a stacked `@Transform` does not change, and it cannot see private or protected members.
+ */
+export interface QueryDecorator {
   <T extends object, K extends PropertyKey>(
     target: T,
     key: K & QueryProperty<T, K>,
@@ -205,7 +209,7 @@ interface ParameterFactory {
     name: string,
     source?: "param" | "header",
   ): PropertyDecorator & ParameterDecorator;
-  (name: string, source: "param" | "query" | "header"): QueryDecorator;
+  (name: string, source?: "param" | "query" | "header"): QueryDecorator;
 }
 
 /**

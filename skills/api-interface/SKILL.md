@@ -102,7 +102,8 @@ Sub-paths: `class Sub extends BookController.extend("archive") {}` mounts at
   `:id`); use `"query"` or `"header"` explicitly (there is no `Header` decorator: read a header with
   `@Parameter("authorization", "header")`). A `"query"` value is `true` for
   `?name` and `?name=`, so type it `string | true | undefined` (or `unknown`):
-  the compiler refuses `string`. `@MultiParameter` defaults to `"query"` and
+  the compiler refuses `string`, even with a stacked `@Transform`: convert in
+  the handler instead. `@MultiParameter` defaults to `"query"` and
   returns an array.
 - Streaming/SSE: inject `@WriteStream(contentType)` (a `PassThrough`) or call
   `response.getWriteStream()`; the response then ignores the body string.
