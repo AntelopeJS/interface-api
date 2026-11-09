@@ -22,6 +22,28 @@ function decoratePlainClass() {
   return PlainHandlers;
 }
 
+const handlerKey = Symbol("handler");
+
+function decorateSymbolKey() {
+  class SymbolController extends Controller("/symbol") {
+    @Get()
+    [handlerKey]() {
+      return "ok";
+    }
+  }
+  return SymbolController;
+}
+
+function decorateSymbolKeyWithLocation() {
+  class SymbolLocationController extends Controller("/symbol-location") {
+    @Get("explicit")
+    [handlerKey]() {
+      return "ok";
+    }
+  }
+  return SymbolLocationController;
+}
+
 describe("Route decorators", () => {
   it("refuse an accessor, which has no method to register", () => {
     assert.throws(decorateAccessor, {
@@ -36,5 +58,17 @@ describe("Route decorators", () => {
       message:
         "Route decorators apply to Controller classes; PlainHandlers has no location",
     });
+  });
+
+  it("refuse a symbol-keyed method without a location, which has no path segment", () => {
+    assert.throws(decorateSymbolKey, {
+      name: "TypeError",
+      message:
+        "Route decorators on a symbol-keyed method need a location; SymbolController[Symbol(handler)] has none",
+    });
+  });
+
+  it("accept a symbol-keyed method given a location", () => {
+    assert.doesNotThrow(decorateSymbolKeyWithLocation);
   });
 });

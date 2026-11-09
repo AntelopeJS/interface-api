@@ -63,9 +63,14 @@ type RouteArguments = [
   priority?: HandlerPriority,
 ];
 
-function handlerSegment(key: PropertyKey): string | number {
+function handlerSegment(
+  controllerName: string,
+  key: PropertyKey,
+): string | number {
   if (isSymbol(key)) {
-    throw new TypeError("Cannot convert a Symbol value to a string");
+    throw new TypeError(
+      `Route decorators on a symbol-keyed method need a location; ${controllerName}[${String(key)}] has none`,
+    );
   }
   return key;
 }
@@ -103,7 +108,7 @@ export function ProcessCallback(
   }
   const meta = GetMetadata(controller, ControllerMeta);
   const fullLocation =
-    `${controller.location}/${location ?? handlerSegment(key)}`.replace(
+    `${controller.location}/${location ?? handlerSegment(controller.name, key)}`.replace(
       /\/+/g,
       "/",
     );
