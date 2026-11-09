@@ -73,3 +73,4 @@ export import ReadBody = body.ReadBody;
 export import SetParameterProvider = parameterDecorators.SetParameterProvider;
 export import AddParameterModifier = parameterDecorators.AddParameterModifier;
 export import StreamBody = body.StreamBody;
+export type { QueryDecorator, QueryValue } from "./parameter-decorators";

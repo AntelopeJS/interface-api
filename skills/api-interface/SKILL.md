@@ -101,8 +101,11 @@ Sub-paths: `class Sub extends BookController.extend("archive") {}` mounts at
   values run first (`HIGHEST = 0`).
 - `@Parameter(name, source)` defaults to `source: "param"` (route params like
   `:id`); use `"query"` or `"header"` explicitly (there is no `Header` decorator: read a header with
-  `@Parameter("authorization", "header")`). `@MultiParameter` defaults to
-  `"query"` and returns an array.
+  `@Parameter("authorization", "header")`). A `"query"` value is `true` for
+  `?name` and `?name=`, so type it `string | true | undefined` (or `unknown`):
+  the compiler refuses `string`, even with a stacked `@Transform`: convert in
+  the handler instead. `@MultiParameter` defaults to `"query"` and
+  returns an array.
 - Streaming/SSE: inject `@WriteStream(contentType)` (a `PassThrough`) or call
   `response.getWriteStream()`; the response then ignores the body string.
   Nothing is sent until the handler returns `context.response`: write the
