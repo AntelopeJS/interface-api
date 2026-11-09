@@ -323,13 +323,28 @@ export const Transform = MakeParameterAndPropertyDecorator(
 );
 
 /**
+ * Provider that {@link Connection} sets, compared by `ProcessCallback`
+ * to refuse the decorator on handlers that never receive a connection.
+ *
+ * @param context Request context
+ * @returns The connection the implementation stored on the context
+ */
+export function connectionProvider(context: RequestContext) {
+  return context.connection;
+}
+
+/**
  * Parameter Provider: WebSocket Connection.
  *
  * Provides access to the WebSocket connection object for WebSocket handlers.
  * This allows you to interact with the WebSocket connection, such as sending
  * messages to the client or handling connection events.
  *
- * This provider can only be used with handlers decorated with @WebsocketHandler.
+ * On a handler parameter, it applies in `websocket` mode (`@WebsocketHandler`)
+ * and `monitor` mode (`@Monitor`); a monitor receives `undefined` for an HTTP
+ * request. In `handler`, `prefix` or `postfix` mode, the route decorator throws
+ * a `TypeError` at class definition and registers no route for that handler.
+ * On a class property, it is `undefined` outside a WebSocket request.
  *
  * Example:
  * ```ts
@@ -348,7 +363,7 @@ export const Transform = MakeParameterAndPropertyDecorator(
  */
 export const Connection = MakeParameterAndPropertyDecorator(
   (target, key, param) =>
-    SetParameterProvider(target, key, param, (context) => context.connection),
+    SetParameterProvider(target, key, param, connectionProvider),
 );
 
 /**

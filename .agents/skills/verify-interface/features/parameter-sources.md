@@ -19,7 +19,7 @@ A module author injects request data into handler arguments and class properties
 ## Sub-features
 
 - `parameter-sources`: a missing value is undefined (`[]` for `@MultiParameter`), `?page` and `?page=` give `true`, a repeated query parameter gives its first value, header names are case-insensitive, and the same decorators fill class properties.
-- `injected-values`: `@Context` is the request context, `@Result` its response, `@Connection` its connection, `@WriteStream` puts the response in stream mode with the given content type, `@BodyStream` yields the body chunks.
+- `injected-values`: `@Context` is the request context, `@Result` its response, `@Connection` on a `@WebsocketHandler` its connection, `@Connection` on a `@Get` handler throws a `TypeError`, `@WriteStream` puts the response in stream mode with the given content type, `@BodyStream` yields the body chunks.
 
 ## How to get to it (user POV)
 
