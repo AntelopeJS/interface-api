@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { Controller, Get } from "../index";
+import { Controller, Get, getRegisteredRoutes } from "../index";
 
 function decorateAccessor() {
   class AccessorController extends Controller("/accessor") {
@@ -44,7 +44,43 @@ function decorateSymbolKeyWithLocation() {
   return SymbolLocationController;
 }
 
+function registeredLocations(callbackName: string): string[] {
+  return getRegisteredRoutes()
+    .filter((route) => route.callbackName === callbackName)
+    .map((route) => route.location);
+}
+
 describe("Route decorators", () => {
+  it("register an empty location at the controller root, without a trailing slash", () => {
+    class EmptyLocationController extends Controller("/empty-location") {
+      @Get("")
+      emptyLocationRoot() {
+        return "ok";
+      }
+    }
+    assert.deepStrictEqual(
+      registeredLocations(
+        EmptyLocationController.prototype.emptyLocationRoot.name,
+      ),
+      ["/empty-location"],
+    );
+  });
+
+  it("register an empty location under the root controller at /", () => {
+    class SlashRootController extends Controller("/") {
+      @Get("")
+      slashControllerRoot() {
+        return "ok";
+      }
+    }
+    assert.deepStrictEqual(
+      registeredLocations(
+        SlashRootController.prototype.slashControllerRoot.name,
+      ),
+      ["/"],
+    );
+  });
+
   it("refuse an accessor, which has no method to register", () => {
     assert.throws(decorateAccessor, {
       name: "TypeError",
