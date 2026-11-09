@@ -21,6 +21,8 @@ import {
  * @param key Handler key or Property key
  * @param index If used on a handler, parameter index
  * @param provider ParameterProvider
+ * @template Context Request context the provider reads, when a controller
+ * decorator sets its own slot on the request
  *
  * Example:
  * ```ts
@@ -36,11 +38,13 @@ import {
  * );
  * ```
  */
-export function SetParameterProvider(
+export function SetParameterProvider<
+  Context extends RequestContext = RequestContext,
+>(
   target: DecoratorTarget,
   key: PropertyKey,
   index: number | undefined,
-  provider: ParameterProvider,
+  provider: ParameterProvider<unknown, Context>,
 ) {
   GetMetadata(target.constructor, ControllerMeta).setProvider(
     key,
