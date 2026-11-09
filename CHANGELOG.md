@@ -1,5 +1,49 @@
 # Changelog
 
+## v0.3.1
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.3.0...v0.3.1)
+
+### 🚀 Enhancements
+
+- **parameters:** Let a provider declare the request context it reads ([#94](https://github.com/AntelopeJS/interface-api/pull/94))
+
+### 🔥 Performance
+
+- **build:** Skip the lib check in build, typecheck keeps it ([#90](https://github.com/AntelopeJS/interface-api/pull/90))
+- **verify:** Compile the declared-shapes probes in one tsc run ([#91](https://github.com/AntelopeJS/interface-api/pull/91))
+
+### 🩹 Fixes
+
+- **verify:** Map each source file to every feature that checks it ([#92](https://github.com/AntelopeJS/interface-api/pull/92))
+- **routes:** Name the handler when a symbol-keyed method has no location ([#93](https://github.com/AntelopeJS/interface-api/pull/93))
+- **routes:** Register an empty route location at the controller root ([#99](https://github.com/AntelopeJS/interface-api/pull/99))
+- **parameters:** Refuse @Connection on handlers that never receive a connection ([#101](https://github.com/AntelopeJS/interface-api/pull/101))
+- **parameters:** Refuse a query parameter whose type does not admit true ([#95](https://github.com/AntelopeJS/interface-api/pull/95))
+
+### 📖 Documentation
+
+- **http-handling:** Return the stream response before writing its chunks ([#98](https://github.com/AntelopeJS/interface-api/pull/98))
+- Register the handler priority prefixes at the controller location ([#97](https://github.com/AntelopeJS/interface-api/pull/97))
+
+### 📦 Build
+
+- **deps:** Bump @antelopejs packages to the 2026-11-06 releases ([#89](https://github.com/AntelopeJS/interface-api/pull/89))
+- **deps:** Bump @antelopejs/tooling-configs to 0.4.0 ([#102](https://github.com/AntelopeJS/interface-api/pull/102))
+
+### 🏡 Chore
+
+- **verify:** Remove seeded runs from the verification skill ([#86](https://github.com/AntelopeJS/interface-api/pull/86))
+- **ci:** Remove the weekly mutation caller ([#87](https://github.com/AntelopeJS/interface-api/pull/87))
+
+### 🤖 CI
+
+- Call ci-node.yml@v1 ([#88](https://github.com/AntelopeJS/interface-api/pull/88))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli ([@Upd4ting](http://github.com/Upd4ting))
+
 ## v0.3.0
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.2.0...v0.3.0)
