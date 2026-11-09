@@ -104,6 +104,8 @@ Sub-paths: `class Sub extends BookController.extend("archive") {}` mounts at
   `"query"` and returns an array.
 - Streaming/SSE: inject `@WriteStream(contentType)` (a `PassThrough`) or call
   `response.getWriteStream()`; the response then ignores the body string.
+  Nothing is sent until the handler returns `context.response`: write the
+  stream from a background task and return at once, never await the writes.
 - WebSocket routes use `@WebsocketHandler(location)` with `@Connection()` to
   get the socket; they are matched as GET upgrades.
 - Custom injection: build your own decorators with `SetParameterProvider` /
