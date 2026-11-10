@@ -1,8 +1,9 @@
 import assert from "node:assert";
 import sinon from "sinon";
-import { ServerResponse } from "node:http";
+import { createServer, ServerResponse } from "node:http";
 
 import { HTTPResult as LocalHTTPResult } from "../index";
+import { isString } from "../guards";
 import { createRequest } from "./request-context";
 
 function createCapturedResponse() {
@@ -125,5 +126,104 @@ describe("HTTPResult response contract", () => {
     assert.equal(captured.response.statusCode, 200);
     assert.equal(captured.end.firstCall.args[0], "");
     assert.equal(captured.response.writableEnded, true);
+  });
+});
+
+interface Received {
+  status: number;
+  contentLength: string | null;
+  transferEncoding: string | null;
+  body: string;
+}
+
+async function receive(
+  result: LocalHTTPResult,
+  prepare: (response: ServerResponse) => void = () => {},
+): Promise<Received> {
+  const server = createServer((_request, response) => {
+    prepare(response);
+    result.sendResponse(response);
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const address = server.address();
+    assert(address !== null && !isString(address), "Server listens on TCP");
+    const response = await fetch(`http://127.0.0.1:${address.port}/`);
+    return {
+      status: response.status,
+      contentLength: response.headers.get("content-length"),
+      transferEncoding: response.headers.get("transfer-encoding"),
+      body: await response.text(),
+    };
+  } finally {
+    server.closeAllConnections();
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
+describe("HTTPResult body framing", () => {
+  it("Frames a buffered body with its byte length", async () => {
+    assert.deepEqual(await receive(new LocalHTTPResult(200, "héllo")), {
+      status: 200,
+      contentLength: "6",
+      transferEncoding: null,
+      body: "héllo",
+    });
+    assert.equal(
+      (await receive(new LocalHTTPResult(201, { ok: true }))).contentLength,
+      "11",
+    );
+    assert.equal((await receive(new LocalHTTPResult())).contentLength, "0");
+  });
+
+  it("Sends no Content-Length with a status that carries no body", async () => {
+    for (const status of [204, 304, 204.5]) {
+      const received = await receive(new LocalHTTPResult(status, null));
+      assert.equal(received.status, Math.trunc(status));
+      assert.equal(received.contentLength, null, String(status));
+    }
+  });
+
+  it("Leaves the framing the result's headers set", async () => {
+    const declared = await receive(
+      LocalHTTPResult.withHeaders("body", { Trailer: "X-Checksum" }),
+    );
+    assert.equal(declared.transferEncoding, "chunked");
+    assert.equal(declared.contentLength, null);
+    assert.equal(declared.body, "body");
+    const chunked = await receive(
+      LocalHTTPResult.withHeaders("body", { "Transfer-Encoding": "chunked" }),
+    );
+    assert.equal(chunked.contentLength, null);
+    const framed = await receive(
+      LocalHTTPResult.withHeaders("body", { "content-length": "4" }),
+    );
+    assert.equal(framed.contentLength, "4");
+  });
+
+  it("Leaves the framing set on the raw response", async () => {
+    for (const [name, value] of [
+      ["Transfer-Encoding", "chunked"],
+      ["Trailer", "X-Checksum"],
+    ]) {
+      const received = await receive(
+        new LocalHTTPResult(200, "body"),
+        (response) => response.setHeader(name, value),
+      );
+      assert.equal(received.transferEncoding, "chunked", name);
+      assert.equal(received.contentLength, null, name);
+      assert.equal(received.body, "body", name);
+    }
+  });
+
+  it("Streams a response without a Content-Length", async () => {
+    const result = new LocalHTTPResult();
+    result.getWriteStream().end("streamed");
+
+    const received = await receive(result);
+
+    assert.equal(received.transferEncoding, "chunked");
+    assert.equal(received.contentLength, null);
+    assert.equal(received.body, "streamed");
   });
 });
