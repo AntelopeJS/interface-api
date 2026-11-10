@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.3.2
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.3.1...v0.3.2)
+
+### 🔥 Performance
+
+- **http-result:** Send buffered responses with Content-Length ([#108](https://github.com/AntelopeJS/interface-api/pull/108))
+
+### 📖 Documentation
+
+- **verify:** Retire the fixed #75 and #76 known findings ([#104](https://github.com/AntelopeJS/interface-api/pull/104), [#75](https://github.com/AntelopeJS/interface-api/issues/75), [#76](https://github.com/AntelopeJS/interface-api/issues/76))
+- **routes:** List every ProcessCallback TypeError and describe the decorator target ([#105](https://github.com/AntelopeJS/interface-api/pull/105))
+- **skills:** Describe ControllerClass typing and the Controller-only route rule ([#106](https://github.com/AntelopeJS/interface-api/pull/106))
+
+### 📦 Build
+
+- **deps:** Bump @antelopejs/tooling-configs to 0.5.0 ([#103](https://github.com/AntelopeJS/interface-api/pull/103))
+- **deps:** Bump @antelopejs/tooling-configs to 0.5.1 ([#107](https://github.com/AntelopeJS/interface-api/pull/107))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli ([@Upd4ting](http://github.com/Upd4ting))
+
 ## v0.3.1
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.3.0...v0.3.1)
