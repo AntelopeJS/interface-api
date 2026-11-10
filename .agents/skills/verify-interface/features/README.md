@@ -16,15 +16,6 @@ One file per feature. `covers:` lists the source files its journeys exercise, pl
 | [types](types.md) | A TypeScript author compiles against the packed declarations. | declared-shapes |
 | [smoke](smoke.md) | The fixed journeys every verdict runs. | core-calls, export-surface |
 
-## Known findings
-
-| Finding | Page | Issue |
-|---|---|---|
-| `@Get("")` registers the location `/users/` with a trailing slash, where the docs say it registers the controller root | `docs/2.controllers.md` | AntelopeJS/interface-api#75 |
-| `@Connection` is documented as valid only on a `@WebsocketHandler` handler, and nothing enforces it | `docs/4.parameters.md` | AntelopeJS/interface-api#76 |
-
-No journey pins either behaviour as correct.
-
 ## Not driven
 
 The interface holds the contract and the decorators; `@antelopejs/api` serves requests. A journey here drives the packed interface next to a stub provider, with fake requests, or through real legacy decorators, so these documented behaviours are not driven, each with its reason.
