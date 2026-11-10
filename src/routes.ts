@@ -103,7 +103,8 @@ function handlerSegment(
 /**
  * Register a RouteHandler to the API from a decorator.
  *
- * @param target Controller class
+ * @param target Decorator target: the prototype of the decorated method, whose
+ * constructor is the controller class
  * @param key Handler key
  * @param descriptor Handler descriptor
  * @param route Handler mode (prefix, handler, postfix, websocket), HTTP method,
@@ -111,6 +112,12 @@ function handlerSegment(
  * priority are optional
  * @returns `{ id }`, an object because {@link Route} returns it as a method
  * decorator's property descriptor
+ * @throws {TypeError} When the descriptor has no `value`, because the decorated
+ * member is not a method
+ * @throws {TypeError} When `target.constructor` is a class that
+ * `Controller` did not create, so it has no location; a static method's
+ * target is the class itself, whose constructor is `Function`
+ * @throws {TypeError} When `key` is a symbol and the route gives no location
  * @throws {TypeError} When a parameter of the handler receives `@Connection`,
  * set on it or inherited from a parent controller's method of the same name,
  * and the mode is neither `websocket` nor `monitor`
