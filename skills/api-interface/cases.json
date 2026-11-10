@@ -57,6 +57,17 @@
         "acceptable": ["antelopejs", "ajs-consume-interface"],
         "mustMention": ["WebsocketHandler", "Connection"]
       }
+    },
+    {
+      "id": "api-interface-route-on-plain-class",
+      "area": "framework",
+      "style": "clean",
+      "prompt": "My class has a @Get method, but loading the module throws \"TypeError: Route decorators apply to Controller classes; Handlers has no location\". What is wrong?",
+      "expect": {
+        "skills": ["api-interface"],
+        "acceptable": ["antelopejs", "ajs-consume-interface"],
+        "mustMention": ["Controller"]
+      }
     }
   ]
 }

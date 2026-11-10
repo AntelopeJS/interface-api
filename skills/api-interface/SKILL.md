@@ -79,6 +79,29 @@ Sub-paths: `class Sub extends BookController.extend("archive") {}` mounts at
 `/books/archive`. `PartialController(BookController)` reuses the same location
 (and inherited computed properties) to split routes across files.
 
+Typing: `Controller(location)` returns a `ControllerClass<object>`, so a bare
+`ControllerClass` instance has no string index. To type the instances, pass a
+base class: `Controller(location, Base)` returns a `ControllerClass<Base>`
+that extends `Base`.
+
+```ts
+class Store {
+  books = new Map<string, string>();
+}
+
+export class StoreController extends Controller("/store", Store) {
+  @Get(":id")
+  async getBook(@Parameter("id") id: string) {
+    return new HTTPResult(200, this.books.get(id) ?? "");
+  }
+}
+```
+
+Route decorators apply only to classes built by `Controller`,
+`PartialController` or `extend`, and to classes that extend them. On any other
+class, the decorator throws `TypeError: Route decorators apply to Controller
+classes; <name> has no location` when the class is defined.
+
 ## Gotchas
 
 - All decorators are factories and MUST be called, even with zero args:
