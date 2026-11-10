@@ -1,10 +1,16 @@
 import { PassThrough } from "node:stream";
-import type { ServerResponse } from "node:http";
+import type { OutgoingHttpHeaders, ServerResponse } from "node:http";
 import { Logging } from "@antelopejs/interface-core/logging";
 
 import { isString } from "./guards";
 
 const SERVER_ERROR_BODY_LOG_LIMIT = 2048;
+
+const FRAMING_HEADERS: ReadonlySet<string> = new Set([
+  "content-length",
+  "trailer",
+  "transfer-encoding",
+]);
 
 /**
  * A response body: a string, sent as is, or a value `JSON.stringify` writes as JSON.
@@ -227,20 +233,36 @@ export class HTTPResult {
   }
 
   /**
-   * Send response.
+   * Send response. A body that is not a stream is sent with its
+   * `Content-Length`, unless the status carries no body (1xx, 204, 304) or
+   * the headers of this result or of `res` already set `Content-Length`,
+   * `Transfer-Encoding` or `Trailer`.
    *
    * @param res Response object
    */
   public sendResponse(res: ServerResponse, abortStream = false) {
     this.logServerError(res);
-    res.writeHead(this.status, {
+    const headers: OutgoingHttpHeaders = {
       ...this.headers,
       "Content-Type": this.contentType,
-    });
+    };
     if (this.stream && !abortStream) {
+      res.writeHead(this.status, headers);
       this.stream.pipe(res);
-    } else {
-      res.end(this.body);
+      return;
     }
+    if (this.hasUnframedBody(res)) {
+      headers["Content-Length"] = Buffer.byteLength(this.body);
+    }
+    res.writeHead(this.status, headers).end(this.body);
+  }
+
+  private hasUnframedBody(res: ServerResponse): boolean {
+    const status = this.status | 0;
+    if (status < 200 || status === 204 || status === 304) {
+      return false;
+    }
+    const names = [...Object.keys(this.headers ?? {}), ...res.getHeaderNames()];
+    return !names.some((name) => FRAMING_HEADERS.has(name.toLowerCase()));
   }
 }
