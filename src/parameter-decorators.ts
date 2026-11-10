@@ -19,7 +19,8 @@ import {
 /**
  * Set the ParameterProvider on a Handler or Property.
  *
- * @param target Controller class
+ * @param target Decorator target: the prototype of the decorated member, whose
+ * constructor is the controller class
  * @param key Handler key or Property key
  * @param index If used on a handler, parameter index
  * @param provider ParameterProvider
@@ -58,7 +59,8 @@ export function SetParameterProvider<
 /**
  * Add a ParameterModifier on a Handler or Property.
  *
- * @param target Controller class
+ * @param target Decorator target: the prototype of the decorated member, whose
+ * constructor is the controller class
  * @param key Handler key or Property key
  * @param index If used on a handler, parameter index
  * @param transformer ParameterModifier
