@@ -97,7 +97,7 @@ pnpm run checks
 
 ## Part of AntelopeJS
 
-[AntelopeJS](https://github.com/AntelopeJS/antelopejs) is the framework this interface belongs to: modules depend on contracts, the application chooses each provider, and [AntelopeJS DMS](https://github.com/AntelopeJS/dms), the open-source back office, is built on it.
+[AntelopeJS](https://github.com/AntelopeJS/antelopejs) is the TypeScript framework where modules depend on contracts and the application chooses the provider. [AntelopeJS DMS](https://github.com/AntelopeJS/dms) is built on it.
 
 <!-- antelopejs-framework-modules:start -->
 
