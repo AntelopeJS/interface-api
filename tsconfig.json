@@ -3,6 +3,8 @@
     "target": "esnext",
     "module": "commonjs",
     "lib": ["ES2022"],
+    "allowJs": true,
+    "checkJs": false,
     "types": ["node", "mocha"],
     "esModuleInterop": true,
     "strict": true,
