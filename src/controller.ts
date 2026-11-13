@@ -116,13 +116,10 @@ export type ParameterModifier<Next = unknown> = (
  */
 export interface ComputedParameter {
   /**
-   * Source of the parameter. It reads the context its decorator declared,
-   * which the route that registers it supplies, so it holds a
-   * `ParameterProvider` of any `RequestContext` subtype.
+   * Source of the parameter. A provider that declared a `RequestContext`
+   * subtype is stored here after `ControllerMeta.setProvider` widens it.
    */
-  provider?: {
-    provide(context: RequestContext): ReturnType<ParameterProvider>;
-  }["provide"];
+  provider?: ParameterProvider;
   modifiers: ParameterModifier[];
 }
 
@@ -227,7 +224,9 @@ export class ControllerMeta {
     param: number | undefined,
     provider: ParameterProvider<unknown, Context>,
   ) {
-    this.getComputedParameter(key, param).provider = provider;
+    // SAFETY: Context names the slots that the caller's controller decorator or prefix handler sets on the request before this provider runs, and computeParameter passes that same request object, so the provider receives the Context it declared.
+    this.getComputedParameter(key, param).provider =
+      provider as ParameterProvider;
   }
 
   /**

@@ -2,9 +2,9 @@
   "rules": {
     "anti-slop/no-unknown-parameters": 1
   },
-  "tsExpectError": 1,
+  "tsExpectError": 0,
   "tsIgnore": 0,
-  "safety": 0,
+  "safety": 1,
   "config": {},
   "agentFiles": true
 }
