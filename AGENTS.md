@@ -8,7 +8,7 @@ The AntelopeJS interface for HTTP and WebSocket APIs, published as `@antelopejs/
 
 ## Tests
 
-- `pnpm test` builds `dist`, then `ajs module test .` reads `src/antelope.test.ts` (`antelopeJs.test` in package.json) and runs the compiled suites in `dist/tests` against `@antelopejs/api` 1.3.0, a devDependency loaded as a local module. `pnpm-workspace.yaml` overrides its `@antelopejs/interface-api` dependency with a link to this package, so the suites exercise the local build: without the override they would test the published copy the api module installs. Port 5010 on 127.0.0.1 must be free.
+- `pnpm test` builds `dist`, then `ajs module test .` reads `src/antelope.test.ts` (`antelopeJs.test` in package.json) and runs the compiled suites in `dist/tests` against `@antelopejs/api` 1.7.3, a devDependency loaded as a local module. `pnpm-workspace.yaml` overrides its `@antelopejs/interface-api` dependency with a link to this package, so the suites exercise the local build: without the override they would test the published copy the api module installs. Port 5010 on 127.0.0.1 must be free.
 - The suites live in `src/tests/`, not `src/test/`, so `knip.config.ts` lists them as entries.
 - The suites import the contract from `../index`, never from `@antelopejs/interface-api`: the package name resolves to the installed published copy unless a self-link exists, and `antelopejs/no-self-import-in-tests` rejects it.
 - The compiled suites ship in `dist/tests` and also run from implementation modules (`antelopeJs.implements`), where the core resolver hands out facades for every passed value: assert behaviour and structure, never reference identity.
