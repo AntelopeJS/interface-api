@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.3.3
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.3.2...v0.3.3)
+
+### 💅 Refactors
+
+- **controller:** Type ComputedParameter.provider without method bivariance ([#110](https://github.com/AntelopeJS/interface-api/pull/110))
+
+### 📖 Documentation
+
+- **readme:** Adopt the AntelopeJS framework README style ([#109](https://github.com/AntelopeJS/interface-api/pull/109))
+
+### 📦 Build
+
+- **deps:** ⚠️  Cap the @antelopejs ranges below the next minor with tooling-configs 0.6.0 ([#112](https://github.com/AntelopeJS/interface-api/pull/112))
+
+### 🤖 CI
+
+- Run the check jobs on Windows beside Linux ([#111](https://github.com/AntelopeJS/interface-api/pull/111))
+
+#### ⚠️ Breaking Changes
+
+- **deps:** ⚠️  Cap the @antelopejs ranges below the next minor with tooling-configs 0.6.0 ([#112](https://github.com/AntelopeJS/interface-api/pull/112))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli ([@Upd4ting](http://github.com/Upd4ting))
+
 ## v0.3.2
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.3.1...v0.3.2)
