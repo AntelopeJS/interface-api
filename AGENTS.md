@@ -8,7 +8,7 @@ The AntelopeJS interface for HTTP and WebSocket APIs, published as `@antelopejs/
 
 ## Tests
 
-- `pnpm test` builds `dist`, then `ajs module test .` reads `src/antelope.test.ts` (`antelopeJs.test` in package.json) and runs the compiled suites in `dist/tests` against `@antelopejs/api` 1.3.0, a devDependency loaded as a local module. `pnpm-workspace.yaml` overrides its `@antelopejs/interface-api` dependency with a link to this package, so the suites exercise the local build: without the override they would test the published copy the api module installs. Port 5010 on 127.0.0.1 must be free.
+- `pnpm test` builds `dist`, then `ajs module test .` reads `src/antelope.test.ts` (`antelopeJs.test` in package.json) and runs the compiled suites in `dist/tests` against `@antelopejs/api` 1.7.3, a devDependency loaded as a local module. `pnpm-workspace.yaml` overrides its `@antelopejs/interface-api` dependency with a link to this package, so the suites exercise the local build: without the override they would test the published copy the api module installs. Port 5010 on 127.0.0.1 must be free.
 - The suites live in `src/tests/`, not `src/test/`, so `knip.config.ts` lists them as entries.
 - The suites import the contract from `../index`, never from `@antelopejs/interface-api`: the package name resolves to the installed published copy unless a self-link exists, and `antelopejs/no-self-import-in-tests` rejects it.
 - The compiled suites ship in `dist/tests` and also run from implementation modules (`antelopeJs.implements`), where the core resolver hands out facades for every passed value: assert behaviour and structure, never reference identity.
@@ -75,50 +75,51 @@ Verify a boundary against the imports a developer or agent would plausibly write
 
 ### What enforces what
 
-| Rule                                                                           | Enforced by                                         |
-| ------------------------------------------------------------------------------ | --------------------------------------------------- |
-| Formatting                                                                     | oxfmt                                               |
-| Lint findings are errors; no rule warns                                        | oxlint preset                                       |
-| Comments are TSDoc, directives, or `SAFETY:` only                              | `antelopejs/no-comments`                            |
-| Every test asserts                                                             | `antelopejs/require-assertion`                      |
-| Tests read no files outside fixtures, helpers, locales                         | `antelopejs/no-fs-read-in-tests`                    |
-| Tests import the code under test from local source, not their own package name | `antelopejs/no-self-import-in-tests`                |
-| No assertion that restates a constant                                          | `antelopejs/no-constant-value-assertion`            |
-| No test whose only check is "is a function"                                    | `antelopejs/no-typeof-function-only-test`           |
-| String-keyed object tables are read through own keys only                      | `antelopejs/no-inherited-key-lookup`                |
-| A type guard checks each member it narrows to; keys with `Object.hasOwn`       | `antelopejs/no-presence-only-type-guard`            |
-| A type guard checks the nested elements and values it claims                   | review; no tool                                     |
-| A startup read does not decide an insert another replica can race              | `antelopejs/no-read-then-insert`                    |
-| `Object.assign` writes no `unknown`, `any` or mistyped value over a field      | `antelopejs/no-unsafe-object-assign`                |
-| Every file type-aware lint reads is listed by a tsconfig                       | `antelopejs/require-tsconfig-include`               |
-| Params ≤ 5, function ≤ 120 lines, file ≤ 500 lines, depth ≤ 4, complexity ≤ 20 | `eslint/max-*`, `eslint/complexity`                 |
-| Cleanup preserves declarations, runtime exports and DMS auto-imports           | `antelopejs-api-diff <base-ref>`                    |
-| Comment-only changes preserve JavaScript emit                                  | `antelopejs-comment-proof <base-ref>`               |
-| PR-body proof tables are copied unedited from the current head                 | `antelopejs-body-check <body.md>`                   |
-| PR-body findings-left lines are live diagnostics at HEAD                       | `antelopejs-body-check <body.md>`                   |
-| Receiver, positional and unpublished-module behaviour                          | `antelopejs-api-diff <base-ref> --probe <file.cjs>` |
-| Directive and `SAFETY:` reasons are true of the code                           | review; no tool                                     |
-| Evasion-only and patched-internal findings go under Attention                  | review; no tool                                     |
-| No-upward rules reject same-tier peers                                         | review and import probes                            |
-| No `@ts-ignore`                                                                | `typescript/ban-ts-comment`                         |
-| No once-used type parameter standing in for `unknown`                          | `typescript/no-unnecessary-type-parameters`         |
-| No `any` passed, assigned or returned where a type is declared                 | `typescript/no-unsafe-{argument,assignment,return}` |
-| Files ≤ 20,000 bytes, tests and agent files included                           | `antelopejs-check-size` (pre-commit)                |
-| Suppressions stay within `guardrails.suppressions.json`                        | `antelopejs-suppressions` (pre-commit, checks)      |
-| No lint config switches off a rule to stay under the budget                    | `antelopejs-suppressions` (pre-commit, checks)      |
-| No added directive disables the `SAFETY:`, comment or test rules               | `antelopejs-suppressions` (pre-commit, checks)      |
-| An added suppression gives a specific reason                                   | `antelopejs-suppressions` (pre-commit, checks)      |
-| A directive in a file a change touches suppresses something and gives a reason | `antelopejs-suppressions` (pre-commit, checks)      |
-| A block disable is closed in its file                                          | `antelopejs-suppressions` (pre-commit, checks)      |
-| Types check                                                                    | `tsc` (pre-push)                                    |
-| No dead files, exports, or dependencies                                        | knip                                                |
-| Managed files match the pack                                                   | `antelopejs-sync --check`                           |
-| A CI gate reads `needs.<id>` only of jobs in its `needs`                       | `antelopejs-sync --check`                           |
-| Entry-only rules exempt no tracked outsider                                    | `antelopejs-sync --check`                           |
-| A DMS layer's `build/backend-boundary.ts` is the pack's plugin                 | `antelopejs-sync --check`                           |
-| No `skipLibCheck` in the root tsconfig or one `typecheck` or `build` uses      | `antelopejs-sync --check`                           |
-| `build` skips the lib check only over what `typecheck` checks                  | `antelopejs-sync --check`                           |
-| `release` runs `typecheck`                                                     | `antelopejs-sync --check`                           |
-| A test names the wrong implementation it catches                               | review; no tool                                     |
+| Rule                                                                               | Enforced by                                         |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Formatting                                                                         | oxfmt                                               |
+| Lint findings are errors; no rule warns                                            | oxlint preset                                       |
+| Comments are TSDoc, directives, or `SAFETY:` only                                  | `antelopejs/no-comments`                            |
+| Every test asserts                                                                 | `antelopejs/require-assertion`                      |
+| Tests read no files outside fixtures, helpers, locales                             | `antelopejs/no-fs-read-in-tests`                    |
+| Tests import the code under test from local source, not their own package name     | `antelopejs/no-self-import-in-tests`                |
+| No assertion that restates a constant                                              | `antelopejs/no-constant-value-assertion`            |
+| No test whose only check is "is a function"                                        | `antelopejs/no-typeof-function-only-test`           |
+| String-keyed object tables are read through own keys only                          | `antelopejs/no-inherited-key-lookup`                |
+| A type guard checks each member it narrows to; keys with `Object.hasOwn`           | `antelopejs/no-presence-only-type-guard`            |
+| A type guard checks the nested elements and values it claims                       | review; no tool                                     |
+| A startup read does not decide an insert another replica can race                  | `antelopejs/no-read-then-insert`                    |
+| An async function or promise callback returns no unrun database query              | `antelopejs/no-unrun-query`                         |
+| `Object.assign` writes no `unknown`, `any` or mistyped value over a field          | `antelopejs/no-unsafe-object-assign`                |
+| Every file type-aware lint reads is listed by a tsconfig that resolves its imports | `antelopejs/require-tsconfig-include`               |
+| Params ≤ 5, function ≤ 120 lines, file ≤ 500 lines, depth ≤ 4, complexity ≤ 20     | `eslint/max-*`, `eslint/complexity`                 |
+| Cleanup preserves declarations, runtime exports and DMS auto-imports               | `antelopejs-api-diff <base-ref>`                    |
+| Comment-only changes preserve JavaScript emit                                      | `antelopejs-comment-proof <base-ref>`               |
+| PR-body proof tables are copied unedited from the current head                     | `antelopejs-body-check <body.md>`                   |
+| PR-body findings-left lines are live diagnostics at HEAD                           | `antelopejs-body-check <body.md>`                   |
+| Receiver, positional and unpublished-module behaviour                              | `antelopejs-api-diff <base-ref> --probe <file.cjs>` |
+| Directive and `SAFETY:` reasons are true of the code                               | review; no tool                                     |
+| Evasion-only and patched-internal findings go under Attention                      | review; no tool                                     |
+| No-upward rules reject same-tier peers                                             | review and import probes                            |
+| No `@ts-ignore`                                                                    | `typescript/ban-ts-comment`                         |
+| No once-used type parameter standing in for `unknown`                              | `typescript/no-unnecessary-type-parameters`         |
+| No `any` passed, assigned or returned where a type is declared                     | `typescript/no-unsafe-{argument,assignment,return}` |
+| Files ≤ 20,000 bytes, tests and agent files included                               | `antelopejs-check-size` (pre-commit)                |
+| Suppressions stay within `guardrails.suppressions.json`                            | `antelopejs-suppressions` (pre-commit, checks)      |
+| No lint config switches off a rule to stay under the budget                        | `antelopejs-suppressions` (pre-commit, checks)      |
+| No added directive disables the `SAFETY:`, comment or test rules                   | `antelopejs-suppressions` (pre-commit, checks)      |
+| An added suppression gives a specific reason                                       | `antelopejs-suppressions` (pre-commit, checks)      |
+| A directive in a file a change touches suppresses something and gives a reason     | `antelopejs-suppressions` (pre-commit, checks)      |
+| A block disable is closed in its file                                              | `antelopejs-suppressions` (pre-commit, checks)      |
+| Types check                                                                        | `tsc` (pre-push)                                    |
+| No dead files, exports, or dependencies                                            | knip                                                |
+| Managed files match the pack                                                       | `antelopejs-sync --check`                           |
+| A CI gate reads `needs.<id>` only of jobs in its `needs`                           | `antelopejs-sync --check`                           |
+| Entry-only rules exempt no tracked outsider                                        | `antelopejs-sync --check`                           |
+| A DMS layer's `build/backend-boundary.ts` is the pack's plugin                     | `antelopejs-sync --check`                           |
+| No `skipLibCheck` in the root tsconfig or one `typecheck` or `build` uses          | `antelopejs-sync --check`                           |
+| `build` skips the lib check only over what `typecheck` checks                      | `antelopejs-sync --check`                           |
+| `release` runs `typecheck`                                                         | `antelopejs-sync --check`                           |
+| A test names the wrong implementation it catches                                   | review; no tool                                     |
 
 <!-- antelopejs-guardrails:end -->
