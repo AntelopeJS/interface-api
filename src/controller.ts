@@ -178,10 +178,27 @@ export class ControllerMeta {
     this.location = hasLocation(owner) ? owner.location : undefined;
   }
 
+  /**
+   * Copy the parent's computed properties and parameters into this metadata.
+   * The copies are this controller's own, so a decorator on this controller
+   * leaves the parent's registered handlers unchanged.
+   *
+   * @param parent Metadata of the parent controller
+   */
   inherit(parent: ControllerMeta) {
-    this.computed_props = { ...parent.computed_props, ...this.computed_props };
+    this.computed_props = {
+      ...mapRecord(parent.computed_props, copyParameter),
+      ...this.computed_props,
+    };
     this.computed_params = {
-      ...parent.computed_params,
+      ...mapRecord(parent.computed_params, (params) =>
+        Object.fromEntries(
+          Object.entries(params).map(([index, param]) => [
+            index,
+            copyParameter(param),
+          ]),
+        ),
+      ),
       ...this.computed_params,
     };
   }
@@ -285,6 +302,20 @@ export function Controller<T extends object>(
     return Object.assign(class {}, { location, extend });
   }
   return Object.assign(class extends base {}, { location, extend });
+}
+
+function mapRecord<V>(record: Record<PropertyKey, V>, map: (value: V) => V) {
+  const mapped: Record<PropertyKey, V> = {};
+  for (const key of Reflect.ownKeys(record)) {
+    if (Object.hasOwn(record, key)) {
+      mapped[key] = map(record[key]);
+    }
+  }
+  return mapped;
+}
+
+function copyParameter(param: ComputedParameter): ComputedParameter {
+  return { ...param, modifiers: [...param.modifiers] };
 }
 
 function hasLocation<O extends object>(
