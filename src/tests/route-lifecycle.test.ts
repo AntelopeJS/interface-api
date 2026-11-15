@@ -7,6 +7,7 @@ import {
   getRegisteredRouteHandlers,
   getRegisteredRoutes,
   HandlerPriority,
+  Parameter,
   RegisterRoute,
   type RouteHandler,
   routesProxy,
@@ -232,5 +233,55 @@ describe("getRegisteredRouteHandlers", () => {
       false,
     );
     assert.equal(routesAt("/handlers/module-unload"), 0);
+  });
+});
+
+describe("Controller inheritance", () => {
+  it("keeps the parent's parameters when a child redeclares a method of that name", () => {
+    class ParentController extends Controller("/lifecycle/family") {
+      @Parameter("origin", "query")
+      origin?: string | true;
+
+      @Get("same")
+      same(@Parameter("parent", "query") parent?: string | true) {
+        return parent;
+      }
+    }
+    class ChildController extends ParentController.extend("child") {
+      @Parameter("kid", "query")
+      override origin?: string | true = undefined;
+
+      @Get("same")
+      override same(@Parameter("child", "query") child?: string | true) {
+        return child;
+      }
+    }
+    const context = createRequestContext();
+    context.url = new URL(
+      "http://127.0.0.1:5010/?parent=P&child=C&origin=O&kid=K",
+    );
+    const handlerAtLocation = (location: string) =>
+      getRegisteredRouteHandlers().find(
+        ({ handler }) => handler.location === location,
+      );
+    const parent = handlerAtLocation("/lifecycle/family/same");
+    const child = handlerAtLocation("/lifecycle/family/child/same");
+    assert(parent && child);
+
+    assert.strictEqual(parent.handler.controller, ParentController);
+    assert.strictEqual(child.handler.controller, ChildController);
+    assert.deepEqual(
+      [parent, child].map(({ handler }) => [
+        handler.parameters[0]?.provider?.(context),
+        handler.properties.origin?.provider?.(context),
+      ]),
+      [
+        ["P", "O"],
+        ["C", "K"],
+      ],
+      "Each handler reads its own class's parameter and property decorators",
+    );
+    UnregisterRoute(Number(parent.id));
+    UnregisterRoute(Number(child.id));
   });
 });
