@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.3.4
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.3.3...v0.3.4)
+
+### 🩹 Fixes
+
+- **controller:** Give a child controller its own copy of inherited parameters ([#115](https://github.com/AntelopeJS/interface-api/pull/115))
+
+### 📖 Documentation
+
+- Remove UPGRADING.md ([#116](https://github.com/AntelopeJS/interface-api/pull/116))
+
+### 📦 Build
+
+- Move to @antelopejs/tooling-configs 0.8 and the three-tier CI ([#113](https://github.com/AntelopeJS/interface-api/pull/113))
+
+### 🏡 Chore
+
+- Remove the verify skill ([#117](https://github.com/AntelopeJS/interface-api/pull/117))
+
+### ✅ Tests
+
+- **controller:** Pin that an override inherits its parent's parameter decorators ([#119](https://github.com/AntelopeJS/interface-api/pull/119))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli
+
 ## v0.3.3
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.3.2...v0.3.3)
