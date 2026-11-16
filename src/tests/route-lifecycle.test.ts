@@ -284,4 +284,66 @@ describe("Controller inheritance", () => {
     UnregisterRoute(Number(parent.id));
     UnregisterRoute(Number(child.id));
   });
+
+  it("gives an override that declares no decorators the parent's parameters", () => {
+    class ParentController extends Controller("/lifecycle/bare") {
+      @Get("same")
+      same(@Parameter("parent", "query") parent?: string | true) {
+        return parent;
+      }
+    }
+    class ChildController extends ParentController.extend("child") {
+      @Get("same")
+      override same(renamed?: string | true) {
+        return renamed;
+      }
+    }
+    const context = createRequestContext();
+    context.url = new URL("http://127.0.0.1:5010/?parent=P");
+    const child = getRegisteredRouteHandlers().find(
+      ({ handler }) => handler.location === "/lifecycle/bare/child/same",
+    );
+    assert(child);
+
+    assert.strictEqual(child.handler.controller, ChildController);
+    assert.equal(child.handler.parameters[0]?.provider?.(context), "P");
+    for (const { id, handler } of getRegisteredRouteHandlers()) {
+      if (handler.location.startsWith("/lifecycle/bare")) {
+        UnregisterRoute(Number(id));
+      }
+    }
+  });
+
+  it("keeps the parent decorator of each parameter index that an override leaves undecorated", () => {
+    class ParentController extends Controller("/lifecycle/partial") {
+      @Get("same")
+      same(@Parameter("parent", "query") parent?: string | true) {
+        return parent;
+      }
+    }
+    class ChildController extends ParentController.extend("child") {
+      @Get("same")
+      override same(
+        skipped?: string | true,
+        @Parameter("child", "query") child?: string | true,
+      ) {
+        return `${skipped}${child}`;
+      }
+    }
+    const context = createRequestContext();
+    context.url = new URL("http://127.0.0.1:5010/?parent=P&child=C");
+    const child = getRegisteredRouteHandlers().find(
+      ({ handler }) => handler.location === "/lifecycle/partial/child/same",
+    );
+    assert(child);
+
+    assert.strictEqual(child.handler.controller, ChildController);
+    assert.equal(child.handler.parameters[0]?.provider?.(context), "P");
+    assert.equal(child.handler.parameters[1]?.provider?.(context), "C");
+    for (const { id, handler } of getRegisteredRouteHandlers()) {
+      if (handler.location.startsWith("/lifecycle/partial")) {
+        UnregisterRoute(Number(id));
+      }
+    }
+  });
 });
