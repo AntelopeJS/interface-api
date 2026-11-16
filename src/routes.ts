@@ -103,6 +103,10 @@ function handlerSegment(
 /**
  * Register a RouteHandler to the API from a decorator.
  *
+ * An override inherits the parameter decorators of the parent method of the
+ * same name, and its own decorator on a parameter index replaces the inherited
+ * one at that index.
+ *
  * @param target Decorator target: the prototype of the decorated method, whose
  * constructor is the controller class
  * @param key Handler key
