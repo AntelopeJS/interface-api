@@ -13,7 +13,7 @@ importers:
     devDependencies:
       '@antelopejs/api':
         specifier: ~1.7.3
-        version: 1.7.3(@antelopejs/core@1.23.0)
+        version: 1.7.8(@antelopejs/core@1.23.0)
       '@antelopejs/core':
         specifier: ~1.23.0
         version: 1.23.0
@@ -74,10 +74,10 @@ importers:
 
 packages:
 
-  '@antelopejs/api@1.7.3':
-    resolution: {integrity: sha512-8upgND1IyZlthJp+iglMRDTy0Cpuml1gBXD7zBWq+0QCCIiGIlwbskmIH1YqBrl1BSj+jW/R/vFWjSzHjvqQQQ==}
+  '@antelopejs/api@1.7.8':
+    resolution: {integrity: sha512-xfF/i7xxUT7dfOmeCD7+HQUTvPhYo/okjvqXbLOsSlPxtsBnuho62qwJPh2Dj0JbVakCnyFoRQMlKiuKtfF/9A==}
     peerDependencies:
-      '@antelopejs/core': '>=1.21.0 <2'
+      '@antelopejs/core': ~1.24.4
     peerDependenciesMeta:
       '@antelopejs/core':
         optional: true
@@ -85,13 +85,14 @@ packages:
   '@antelopejs/core@1.23.0':
     resolution: {integrity: sha512-RZvKjGqY8UntJxBNXtoYSSQwQxvM+WUgWfwB/YbQVk7K7GFugDCj3zyoLWmWyQDg48lwNbfrLDAMGvQ4OFy1Jg==}
     engines: {node: ^20.19.0 || >=22.12.0}
+    deprecated: 'Update to @antelopejs/core >=1.24.6: interface-core 0.5.2 adds HoldReloads, which older cores do not implement'
     hasBin: true
 
-  '@antelopejs/interface-api-util@0.3.0':
-    resolution: {integrity: sha512-9XGBY3rJk/uwJVpEuazVCeehYHtL4llCtyIT/6YAIkUK7ib0bJFGTqj74ni0KRlbH+jtPp4FU6XyUJL5SVxf+Q==}
+  '@antelopejs/interface-api-util@0.3.3':
+    resolution: {integrity: sha512-jk5uRMjjjkRm/vOoB1NCvtcgjQYvI27y2/4O+5cLlrryKpOd52amkQIJKbdX/n/bkxdx19oUGkwYLyFwxyaXNw==}
     peerDependencies:
-      '@antelopejs/interface-api': '>=0.3.0 <1.0.0'
-      '@antelopejs/interface-core': '>=0.2.4 <1.0.0'
+      '@antelopejs/interface-api': '>=0.3.3 <0.4.0'
+      '@antelopejs/interface-core': '>=0.5.1 <0.6.0'
 
   '@antelopejs/interface-core@0.5.1':
     resolution: {integrity: sha512-ON/7TYA1yyT8UznzKi6vnwyjRU3byNE0OcFXBmf8dE/dqp8hKjeWHVyA2EUPOngmEimCLw4idZqOS5DJqMJx3g==}
@@ -2669,10 +2670,10 @@ packages:
 
 snapshots:
 
-  '@antelopejs/api@1.7.3(@antelopejs/core@1.23.0)':
+  '@antelopejs/api@1.7.8(@antelopejs/core@1.23.0)':
     dependencies:
       '@antelopejs/interface-api': 'link:'
-      '@antelopejs/interface-api-util': 0.3.0(@antelopejs/interface-api@)(@antelopejs/interface-core@0.5.1)
+      '@antelopejs/interface-api-util': 0.3.3(@antelopejs/interface-api@)(@antelopejs/interface-core@0.5.1)
       '@antelopejs/interface-core': 0.5.1
       reflect-metadata: 0.2.2
       ws: 8.21.0
@@ -2697,7 +2698,7 @@ snapshots:
       semver: 7.8.6
       typescript: 5.9.3
 
-  '@antelopejs/interface-api-util@0.3.0(@antelopejs/interface-api@)(@antelopejs/interface-core@0.5.1)':
+  '@antelopejs/interface-api-util@0.3.3(@antelopejs/interface-api@)(@antelopejs/interface-core@0.5.1)':
     dependencies:
       '@antelopejs/interface-api': 'link:'
       '@antelopejs/interface-core': 0.5.1
