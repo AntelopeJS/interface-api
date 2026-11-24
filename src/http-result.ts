@@ -28,12 +28,29 @@ export type HTTPBody =
   | { readonly [key: string]: HTTPBody | undefined }
   | { toJSON(): HTTPBody };
 
+const HTTP_RESULT_BRAND = Symbol.for("@antelopejs/interface-api/HTTPResult");
+
+/**
+ * Whether a value is an `HTTPResult`, including one built by another copy of this package.
+ *
+ * `instanceof HTTPResult` is false across copies, so test with this guard instead.
+ *
+ * @param value Value to test
+ * @returns True when the value carries the brand every `HTTPResult` sets
+ */
+export function IsHTTPResult<T>(value: T): value is T & HTTPResult {
+  return (
+    typeof value === "object" && value !== null && HTTP_RESULT_BRAND in value
+  );
+}
+
 /**
  * Result object of an API call.
  *
  * This object contains the status, body & content type, and additional headers.
  */
 export class HTTPResult {
+  private readonly [HTTP_RESULT_BRAND] = true;
   private status = 200;
   private body = "";
   private contentType = "text/plain";
@@ -57,8 +74,7 @@ export class HTTPResult {
     headers: Record<string, string>,
     defaultStatus = 200,
   ) {
-    const result =
-      res instanceof HTTPResult ? res : new HTTPResult(defaultStatus, res);
+    const result = IsHTTPResult(res) ? res : new HTTPResult(defaultStatus, res);
     for (const [key, val] of Object.entries(headers)) {
       result.addHeader(key, val);
     }

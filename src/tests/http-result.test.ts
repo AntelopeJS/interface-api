@@ -2,7 +2,7 @@ import assert from "node:assert";
 import sinon from "sinon";
 import { createServer, ServerResponse } from "node:http";
 
-import { HTTPResult as LocalHTTPResult } from "../index";
+import { HTTPResult as LocalHTTPResult, IsHTTPResult } from "../index";
 import { isString } from "../guards";
 import { createRequest } from "./request-context";
 
@@ -225,5 +225,42 @@ describe("HTTPResult body framing", () => {
     assert.equal(received.transferEncoding, "chunked");
     assert.equal(received.contentLength, null);
     assert.equal(received.body, "streamed");
+  });
+});
+
+function isModuleCopy(
+  value: unknown,
+): value is { HTTPResult: typeof LocalHTTPResult } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "HTTPResult" in value &&
+    typeof value.HTTPResult === "function"
+  );
+}
+
+describe("IsHTTPResult", () => {
+  it("Accepts an HTTPResult built by a second copy of the module", () => {
+    const resolved = require.resolve("../http-result");
+    const first = require.cache[resolved];
+    delete require.cache[resolved];
+    const copy: unknown = require("../http-result");
+    assert(isModuleCopy(copy), "Second module copy loaded");
+    require.cache[resolved] = first;
+    const foreign = new copy.HTTPResult(201, "made elsewhere");
+
+    assert.notEqual(copy.HTTPResult, LocalHTTPResult);
+    assert.equal(foreign instanceof LocalHTTPResult, false);
+    assert.equal(IsHTTPResult(foreign), true);
+    assert.equal(LocalHTTPResult.withHeaders(foreign, { "X-A": "a" }), foreign);
+  });
+
+  it("Rejects values that are not HTTPResults", () => {
+    const lookalike = { getStatus: () => 200, sendResponse: () => undefined };
+
+    assert.deepEqual(
+      [undefined, null, "text", 1, {}, lookalike, []].map(IsHTTPResult),
+      [false, false, false, false, false, false, false],
+    );
   });
 });
