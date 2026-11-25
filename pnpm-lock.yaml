@@ -13,10 +13,10 @@ importers:
     devDependencies:
       '@antelopejs/api':
         specifier: ~1.7.3
-        version: 1.7.8(@antelopejs/core@1.23.0)
+        version: 1.7.8(@antelopejs/core@1.24.7)
       '@antelopejs/core':
-        specifier: ~1.23.0
-        version: 1.23.0
+        specifier: ~1.24.0
+        version: 1.24.7
       '@antelopejs/interface-core':
         specifier: '>=0.5.1 <0.6.0'
         version: 0.5.1
@@ -82,10 +82,9 @@ packages:
       '@antelopejs/core':
         optional: true
 
-  '@antelopejs/core@1.23.0':
-    resolution: {integrity: sha512-RZvKjGqY8UntJxBNXtoYSSQwQxvM+WUgWfwB/YbQVk7K7GFugDCj3zyoLWmWyQDg48lwNbfrLDAMGvQ4OFy1Jg==}
+  '@antelopejs/core@1.24.7':
+    resolution: {integrity: sha512-d2oMMhSbnPUqIOM36ypHD8ppV7oMyMKBzy8Nnb7z6//Ilg+WQQQBNzXYO3hTOxMT9vA+FtJPPkyWpdy1Lk/cWQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
-    deprecated: 'Update to @antelopejs/core >=1.24.6: interface-core 0.5.2 adds HoldReloads, which older cores do not implement'
     hasBin: true
 
   '@antelopejs/interface-api-util@0.3.3':
@@ -96,6 +95,9 @@ packages:
 
   '@antelopejs/interface-core@0.5.1':
     resolution: {integrity: sha512-ON/7TYA1yyT8UznzKi6vnwyjRU3byNE0OcFXBmf8dE/dqp8hKjeWHVyA2EUPOngmEimCLw4idZqOS5DJqMJx3g==}
+
+  '@antelopejs/interface-core@0.5.2':
+    resolution: {integrity: sha512-5rmFLzHH8x8SCMK3KEm7L4DdRaLXjKKMWS/5ektDz5C2P/mAmaG++JAe1+09RBFNWWe0LER56vz9AVIeqVQoMA==}
 
   '@antelopejs/tooling-configs@0.9.4':
     resolution: {integrity: sha512-cP2xhjJkxdwhaCRm3kDnZ4AS4GJ4LY7oDvd2MidYl2snFsW1UbUbCzhHcnrYQWifPZV8LCvO0xZMTvLM2OWDKQ==}
@@ -1919,10 +1921,6 @@ packages:
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
-  lru-cache@11.2.7:
-    resolution: {integrity: sha512-aY/R+aEsRelme17KGQa/1ZSIpLpNYYrhcrepKTZgE+W3WM16YMCaPwOHLHsmopZHELU0Ojin1lPVxKR0MihncA==}
-    engines: {node: 20 || >=22}
-
   lru-cache@11.5.3:
     resolution: {integrity: sha512-U4N8FgzmWxc8k1VH8Kr6lQg18U7Fjvby6wXHVRX/ZZ7IwWbRMgrRbP0Wrb5q5NVinryp4SQampHKdvtecItxUg==}
     engines: {node: 20 || >=22}
@@ -2686,7 +2684,7 @@ packages:
 
 snapshots:
 
-  '@antelopejs/api@1.7.8(@antelopejs/core@1.23.0)':
+  '@antelopejs/api@1.7.8(@antelopejs/core@1.24.7)':
     dependencies:
       '@antelopejs/interface-api': 'link:'
       '@antelopejs/interface-api-util': 0.3.3(@antelopejs/interface-api@)(@antelopejs/interface-core@0.5.1)
@@ -2694,14 +2692,14 @@ snapshots:
       reflect-metadata: 0.2.2
       ws: 8.21.0
     optionalDependencies:
-      '@antelopejs/core': 1.23.0
+      '@antelopejs/core': 1.24.7
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@antelopejs/core@1.23.0':
+  '@antelopejs/core@1.24.7':
     dependencies:
-      '@antelopejs/interface-core': 0.5.1
+      '@antelopejs/interface-core': 0.5.2
       '@clack/prompts': 1.8.1
       '@types/proper-lockfile': 4.1.4
       commander: 13.1.0
@@ -2709,10 +2707,12 @@ snapshots:
       jiti: 2.7.0
       mocha: 12.0.3
       picocolors: 1.1.1
+      picomatch: 4.0.7
       proper-lockfile: 4.1.2
       reflect-metadata: 0.2.2
       semver: 7.8.6
       typescript: 5.9.3
+      yaml: 2.9.1
 
   '@antelopejs/interface-api-util@0.3.3(@antelopejs/interface-api@)(@antelopejs/interface-core@0.5.1)':
     dependencies:
@@ -2720,6 +2720,10 @@ snapshots:
       '@antelopejs/interface-core': 0.5.1
 
   '@antelopejs/interface-core@0.5.1':
+    dependencies:
+      reflect-metadata: 0.2.2
+
+  '@antelopejs/interface-core@0.5.2':
     dependencies:
       reflect-metadata: 0.2.2
 
@@ -4043,7 +4047,7 @@ snapshots:
 
   glob@13.0.6:
     dependencies:
-      minimatch: 10.2.4
+      minimatch: 10.2.6
       minipass: 7.1.3
       path-scurry: 2.0.2
 
@@ -4327,8 +4331,6 @@ snapshots:
       yoctocolors: 2.1.2
 
   lru-cache@10.4.3: {}
-
-  lru-cache@11.2.7: {}
 
   lru-cache@11.5.3: {}
 
@@ -4677,7 +4679,7 @@ snapshots:
 
   path-scurry@2.0.2:
     dependencies:
-      lru-cache: 11.2.7
+      lru-cache: 11.5.3
       minipass: 7.1.3
 
   path-scurry@3.0.0:
