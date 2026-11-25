@@ -1,5 +1,40 @@
 # Changelog
 
+## v0.3.5
+
+[compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.3.4...v0.3.5)
+
+### 🚀 Enhancements
+
+- Export IsHTTPResult guard checking a brand set by HTTPResult ([#129](https://github.com/AntelopeJS/interface-api/pull/129))
+
+### 🩹 Fixes
+
+- Harden IsHTTPResult brand and document it in the skill ([#132](https://github.com/AntelopeJS/interface-api/pull/132))
+
+### 📦 Build
+
+- Roll out the trunk CI with tooling-configs 0.8.9 ([#120](https://github.com/AntelopeJS/interface-api/pull/120))
+
+### 🏡 Chore
+
+- **deps:** Update dependency ws to v8.21.0 [security] ([#121](https://github.com/AntelopeJS/interface-api/pull/121))
+- **deps:** Update dependency @antelopejs/api to v1.7.8 ([#126](https://github.com/AntelopeJS/interface-api/pull/126))
+- **deps:** Update dependency oxlint-tsgolint to v7.0.2007 ([#127](https://github.com/AntelopeJS/interface-api/pull/127))
+- **deps:** Update dependency rimraf to v6.1.4 ([#128](https://github.com/AntelopeJS/interface-api/pull/128))
+- **deps:** Update dependency oxlint-tsgolint to v7.0.2008 ([#130](https://github.com/AntelopeJS/interface-api/pull/130))
+- **deps:** Update dependency @types/node to v22.20.5 ([#134](https://github.com/AntelopeJS/interface-api/pull/134))
+- **deps:** Update dependency @antelopejs/core to ~1.24.0 ([#133](https://github.com/AntelopeJS/interface-api/pull/133))
+
+### 🤖 CI
+
+- Re-sync the AntelopeJS pack for the release app ([#123](https://github.com/AntelopeJS/interface-api/pull/123))
+- Stop forwarding the retired RELEASE_GITHUB_TOKEN ([#124](https://github.com/AntelopeJS/interface-api/pull/124))
+
+### ❤️ Contributors
+
+- Antony Rizzitelli
+
 ## v0.3.4
 
 [compare changes](https://github.com/AntelopeJS/interface-api/compare/v0.3.3...v0.3.4)
