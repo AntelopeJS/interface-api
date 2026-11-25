@@ -75,6 +75,10 @@ export class BookController extends Controller("/books") {
 }
 ```
 
+To test whether a value is an `HTTPResult`, use `IsHTTPResult(value)` rather
+than `value instanceof HTTPResult`: `instanceof` is false for a result built by
+another copy of the package. A spread copy of a result is not an `HTTPResult`.
+
 Sub-paths: `class Sub extends BookController.extend("archive") {}` mounts at
 `/books/archive`. `PartialController(BookController)` reuses the same location
 (and inherited computed properties) to split routes across files.

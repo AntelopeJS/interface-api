@@ -36,11 +36,14 @@ const HTTP_RESULT_BRAND = Symbol.for("@antelopejs/interface-api/HTTPResult");
  * `instanceof HTTPResult` is false across copies, so test with this guard instead.
  *
  * @param value Value to test
- * @returns True when the value carries the brand every `HTTPResult` sets
+ * @returns True when the value carries the non-enumerable brand every `HTTPResult` sets to true
  */
 export function IsHTTPResult<T>(value: T): value is T & HTTPResult {
   return (
-    typeof value === "object" && value !== null && HTTP_RESULT_BRAND in value
+    typeof value === "object" &&
+    value !== null &&
+    HTTP_RESULT_BRAND in value &&
+    value[HTTP_RESULT_BRAND] === true
   );
 }
 
@@ -50,7 +53,7 @@ export function IsHTTPResult<T>(value: T): value is T & HTTPResult {
  * This object contains the status, body & content type, and additional headers.
  */
 export class HTTPResult {
-  private readonly [HTTP_RESULT_BRAND] = true;
+  declare private readonly [HTTP_RESULT_BRAND]: true;
   private status = 200;
   private body = "";
   private contentType = "text/plain";
@@ -87,6 +90,7 @@ export class HTTPResult {
    * @param type Content type
    */
   public constructor(status = 200, body?: HTTPBody, type?: string) {
+    Object.defineProperty(this, HTTP_RESULT_BRAND, { value: true });
     this.setBody(body, type);
     this.setStatus(status);
   }
