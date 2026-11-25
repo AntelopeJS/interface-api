@@ -13,7 +13,7 @@ importers:
     devDependencies:
       '@antelopejs/api':
         specifier: ~1.7.3
-        version: 1.7.8(@antelopejs/core@1.24.7)
+        version: 1.7.9(@antelopejs/core@1.24.7)
       '@antelopejs/core':
         specifier: ~1.24.0
         version: 1.24.7
@@ -74,8 +74,8 @@ importers:
 
 packages:
 
-  '@antelopejs/api@1.7.8':
-    resolution: {integrity: sha512-xfF/i7xxUT7dfOmeCD7+HQUTvPhYo/okjvqXbLOsSlPxtsBnuho62qwJPh2Dj0JbVakCnyFoRQMlKiuKtfF/9A==}
+  '@antelopejs/api@1.7.9':
+    resolution: {integrity: sha512-qfzfw4s4FctsAJ/6iZA9BBEJtVIniHC8iWyle06FoYjoOPx/A2G7He8Qlz9WASeH2eCvV61eu5cSdIMfsp4OcQ==}
     peerDependencies:
       '@antelopejs/core': ~1.24.4
     peerDependenciesMeta:
@@ -918,8 +918,8 @@ packages:
   '@types/esrecurse@4.3.1':
     resolution: {integrity: sha512-xJBAbDifo5hpffDBuHl0Y8ywswbiAp/Wi7Y/GtAgSlZyIABppyurxVueOPE8LUQOxdlgi6Zqce7uoEpqNTeiUw==}
 
-  '@types/estree@1.0.10':
-    resolution: {integrity: sha512-lTyOMnOcmRBzdCv6/4zUZCrEhV0xrqQiUZBZtVcbmLHBXKLnN8q89v/wKRF/Q0HbwVsqbIG3o5HDoFl9sduM+g==}
+  '@types/estree@1.0.11':
+    resolution: {integrity: sha512-YBdNe5JcjYR0sPhJW1QIeRCmI11YhYvaRuGCs9+WCeTTb+Yhb2BE2XMe5/wAqF10FK5g3+q1PDhQABfT7aX0gg==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -2684,7 +2684,7 @@ packages:
 
 snapshots:
 
-  '@antelopejs/api@1.7.8(@antelopejs/core@1.24.7)':
+  '@antelopejs/api@1.7.9(@antelopejs/core@1.24.7)':
     dependencies:
       '@antelopejs/interface-api': 'link:'
       '@antelopejs/interface-api-util': 0.3.3(@antelopejs/interface-api@)(@antelopejs/interface-core@0.5.1)
@@ -3346,7 +3346,7 @@ snapshots:
 
   '@types/esrecurse@4.3.1': {}
 
-  '@types/estree@1.0.10': {}
+  '@types/estree@1.0.11': {}
 
   '@types/json-schema@7.0.15': {}
 
@@ -3825,7 +3825,7 @@ snapshots:
   eslint-scope@9.1.2:
     dependencies:
       '@types/esrecurse': 4.3.1
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       esrecurse: 4.3.0
       estraverse: 5.3.0
 
@@ -3844,7 +3844,7 @@ snapshots:
       '@humanfs/node': 0.16.8
       '@humanwhocodes/module-importer': 1.0.1
       '@humanwhocodes/retry': 0.4.3
-      '@types/estree': 1.0.10
+      '@types/estree': 1.0.11
       ajv: 6.15.0
       cross-spawn: 7.0.6
       debug: 4.4.3(supports-color@8.1.1)
