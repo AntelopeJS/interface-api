@@ -255,6 +255,15 @@ describe("IsHTTPResult", () => {
     assert.equal(LocalHTTPResult.withHeaders(foreign, { "X-A": "a" }), foreign);
   });
 
+  it("Rejects a spread copy and a brand set to false", () => {
+    const spread = Object.assign({}, new LocalHTTPResult(200, "x"));
+    const falseBrand = {
+      [Symbol.for("@antelopejs/interface-api/HTTPResult")]: false,
+    };
+
+    assert.deepEqual([spread, falseBrand].map(IsHTTPResult), [false, false]);
+  });
+
   it("Rejects values that are not HTTPResults", () => {
     const lookalike = { getStatus: () => 200, sendResponse: () => undefined };
 
