@@ -42,8 +42,7 @@ export function IsHTTPResult<T>(value: T): value is T & HTTPResult {
   return (
     typeof value === "object" &&
     value !== null &&
-    HTTP_RESULT_BRAND in value &&
-    value[HTTP_RESULT_BRAND] === true
+    Object.getOwnPropertyDescriptor(value, HTTP_RESULT_BRAND)?.value === true
   );
 }
 
