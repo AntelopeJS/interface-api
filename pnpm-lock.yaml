@@ -13,10 +13,10 @@ importers:
     devDependencies:
       '@antelopejs/api':
         specifier: ~1.7.3
-        version: 1.7.9(@antelopejs/core@1.24.8)
+        version: 1.7.10(@antelopejs/core@1.24.9)
       '@antelopejs/core':
         specifier: ~1.24.0
-        version: 1.24.8
+        version: 1.24.9
       '@antelopejs/interface-core':
         specifier: '>=0.5.1 <0.6.0'
         version: 0.5.1
@@ -74,16 +74,16 @@ importers:
 
 packages:
 
-  '@antelopejs/api@1.7.9':
-    resolution: {integrity: sha512-qfzfw4s4FctsAJ/6iZA9BBEJtVIniHC8iWyle06FoYjoOPx/A2G7He8Qlz9WASeH2eCvV61eu5cSdIMfsp4OcQ==}
+  '@antelopejs/api@1.7.10':
+    resolution: {integrity: sha512-LFA29M5mvj9wNMVjDUfe+bPEEQ0QaqU3fS2lcoHmJX9XNfmqOV4efZw+thYP4VvTZKl606xV7NO5fkaCP1Th5A==}
     peerDependencies:
       '@antelopejs/core': ~1.24.4
     peerDependenciesMeta:
       '@antelopejs/core':
         optional: true
 
-  '@antelopejs/core@1.24.8':
-    resolution: {integrity: sha512-zEGT+Xlirpl3yFOgPFd6zCP30WNp83kQrRnZuwQRAvaUjvKtbQjL3YHoNolMOJxAwIzaeKuT6d5KXXyR8shNcA==}
+  '@antelopejs/core@1.24.9':
+    resolution: {integrity: sha512-VjqlnHgIZVLvQqyx6PyzsWEMpVV0H2ZRIK63wmbFzRl2EjebIXEwKeo5xZ+80B00HEBNd3vCXprvnL0LTar1qA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
@@ -96,8 +96,8 @@ packages:
   '@antelopejs/interface-core@0.5.1':
     resolution: {integrity: sha512-ON/7TYA1yyT8UznzKi6vnwyjRU3byNE0OcFXBmf8dE/dqp8hKjeWHVyA2EUPOngmEimCLw4idZqOS5DJqMJx3g==}
 
-  '@antelopejs/interface-core@0.5.3':
-    resolution: {integrity: sha512-HvSu+n4tAdiHyTcj2hApmFPWL3M/qfS6x5/YUeuxCe7JQptpyjkc5O5MCaZkv91bo7nGJXtnWbIEiER+aJKHsA==}
+  '@antelopejs/interface-core@0.5.4':
+    resolution: {integrity: sha512-5IzF8eGvXugI5KNHj2q+ux3J5AE09Sagul4Sl1k2FFRlfm7WSRE1uzmjL8CT2cqJvWExqW6SGX17InOddI/t/g==}
 
   '@antelopejs/tooling-configs@0.10.7':
     resolution: {integrity: sha512-13abD0BhsR9RF6LQoYYKa+XBknlmcrZVB6iW3BwdfHKu6pPG4ClhAQCLJSSPYtbTMuvNU4imI+dVFSB78TdTnQ==}
@@ -2455,8 +2455,8 @@ packages:
   string_decoder@1.1.1:
     resolution: {integrity: sha512-n/ShnvDi6FHbbVfviro+WojiFzv+s8MPMHBczVePfUpDJLwoLT0ht1l4YwBCbi8pJAveEEdnkHyPyTP/mzRfwg==}
 
-  string_decoder@1.3.0:
-    resolution: {integrity: sha512-hkRX8U1WjJFd8LsDJ2yQ/wWWxaopEsABU1XfkM8A+j0+85JAGppt16cr1Whg6KIbb4okU6Mql6BOj+uup/wKeA==}
+  string_decoder@1.4.0:
+    resolution: {integrity: sha512-r8azg21Y67ckRmeG0hHol5CeDXMs4ZFkFT6eXMO39hX7khvJcopBcYTCeWZ0rQXkMoPh8lVdbjmsOMGL8krxRQ==}
 
   strip-ansi@6.0.1:
     resolution: {integrity: sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==}
@@ -2701,7 +2701,7 @@ packages:
 
 snapshots:
 
-  '@antelopejs/api@1.7.9(@antelopejs/core@1.24.8)':
+  '@antelopejs/api@1.7.10(@antelopejs/core@1.24.9)':
     dependencies:
       '@antelopejs/interface-api': 'link:'
       '@antelopejs/interface-api-util': 0.3.3(@antelopejs/interface-api@)(@antelopejs/interface-core@0.5.1)
@@ -2709,14 +2709,14 @@ snapshots:
       reflect-metadata: 0.2.2
       ws: 8.21.0
     optionalDependencies:
-      '@antelopejs/core': 1.24.8
+      '@antelopejs/core': 1.24.9
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@antelopejs/core@1.24.8':
+  '@antelopejs/core@1.24.9':
     dependencies:
-      '@antelopejs/interface-core': 0.5.3
+      '@antelopejs/interface-core': 0.5.4
       '@clack/prompts': 1.9.0
       '@types/proper-lockfile': 4.1.4
       commander: 13.1.0
@@ -2740,7 +2740,7 @@ snapshots:
     dependencies:
       reflect-metadata: 0.2.2
 
-  '@antelopejs/interface-core@0.5.3':
+  '@antelopejs/interface-core@0.5.4':
     dependencies:
       reflect-metadata: 0.2.2
 
@@ -4792,7 +4792,7 @@ snapshots:
   readable-stream@3.6.2:
     dependencies:
       inherits: 2.0.4
-      string_decoder: 1.3.0
+      string_decoder: 1.4.0
       util-deprecate: 1.0.2
 
   readdirp@3.6.0:
@@ -4952,7 +4952,7 @@ snapshots:
     dependencies:
       safe-buffer: 5.1.2
 
-  string_decoder@1.3.0:
+  string_decoder@1.4.0:
     dependencies:
       safe-buffer: 5.2.1
 
